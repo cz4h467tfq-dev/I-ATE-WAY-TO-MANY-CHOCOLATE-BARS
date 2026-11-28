@@ -2,441 +2,95 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hello from Kfarchima – WELNOVA, Lebanon</title>
-<meta name="description" content="WELNOVA eTwinning project, Week 1: our city Kfarchima, our school Collège Notre Dame des Sœurs Antonines, and our teacher.">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Bayt Kfarchima – WELNOVA, Lebanon</title>
+<meta name="description" content="Walk through a Lebanese house in Kfarchima: our city, our school and our teacher, for the WELNOVA eTwinning project. With an AR model of our future school.">
+<meta name="theme-color" content="#123D2C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400..700&family=Work+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --stone: #ECEDE6;
-    --stone-2: #DFE1D7;
-    --cedar: #123D2C;
-    --cedar-2: #1E5A42;
-    --tile: #B3261E;
-    --sea: #2B5D8A;
-    --ink: #15191A;
-    --muted: #4C5553;
-    --line: rgba(21, 25, 26, 0.18);
-    --kufi: 'Reem Kufi', 'Noto Kufi Arabic', Tahoma, sans-serif;
-    --text: 'Work Sans', Arial, sans-serif;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  html { scroll-behavior: smooth; }
-  body { background: var(--stone); color: var(--ink); font-family: var(--text); font-size: 18px; line-height: 1.65; }
-  a { color: inherit; }
-  :focus-visible { outline: 3px solid var(--tile); outline-offset: 3px; }
-  .ar { font-family: var(--kufi); direction: rtl; unicode-bidi: isolate; }
-  .page { width: min(1200px, 90vw); margin: 0 auto; }
-
-  /* top bar */
-  .top { border-bottom: 1px solid var(--line); }
-  .top .page { display: flex; justify-content: space-between; align-items: center; min-height: 64px; gap: 24px; }
-  .mark { font-family: var(--kufi); font-weight: 700; font-size: 22px; text-decoration: none; color: var(--cedar); letter-spacing: 0.5px; }
-  .top nav { display: flex; gap: 28px; font-size: 15px; }
-  .top nav a { text-decoration: none; color: var(--muted); padding: 6px 0; border-bottom: 2px solid transparent; }
-  .top nav a:hover { color: var(--ink); border-bottom-color: var(--tile); }
-
-  /* hero */
-  .hero { padding: 72px 0 0; }
-  .hero .page { display: grid; grid-template-columns: 1fr 1.05fr; gap: 56px; align-items: end; }
-  .hero-ar { font-size: clamp(56px, 8vw, 112px); line-height: 1.1; color: var(--cedar); font-weight: 700; text-align: right; }
-  .hero h1 { font-family: var(--kufi); font-weight: 600; font-size: clamp(32px, 4vw, 52px); line-height: 1.12; margin-top: 18px; color: var(--ink); }
-  .hero .intro { margin-top: 22px; max-width: 34em; color: var(--muted); font-size: 19px; }
-  .hero .when { margin-top: 28px; font-size: 15px; color: var(--muted); border-left: 3px solid var(--tile); padding-left: 14px; }
-  .facade { width: 100%; height: auto; display: block; }
-  .facade a text { font-family: var(--text); font-size: 17px; font-weight: 600; fill: var(--stone); }
-  .facade a:hover .glass, .facade a:focus .glass { fill: var(--cedar-2); }
-  .facade .glass { fill: var(--sea); transition: fill .25s; }
-  @media (prefers-reduced-motion: no-preference) {
-    .facade .glass { animation: open .9s ease-out both; }
-    .facade a:nth-of-type(2) .glass { animation-delay: .25s; }
-    .facade a:nth-of-type(3) .glass { animation-delay: .5s; }
-    @keyframes open { from { fill: var(--stone-2); } }
-  }
-  .ground { height: 18px; background: var(--cedar); }
-
-  /* chapters */
-  .chapter { padding: 96px 0; border-bottom: 1px solid var(--line); }
-  .chapter .page { display: grid; grid-template-columns: 300px 1fr; gap: 64px; }
-  .chapter-head { position: sticky; top: 24px; align-self: start; }
-  .chapter-head .ar { display: block; font-size: 44px; line-height: 1.1; color: var(--tile); text-align: left; }
-  .chapter-head h2 { font-family: var(--kufi); font-size: 34px; font-weight: 600; line-height: 1.15; margin-top: 10px; }
-  .chapter-head p { margin-top: 12px; font-size: 15px; color: var(--muted); max-width: 22em; }
-  .body > * + * { margin-top: 56px; }
-  .body h3 { font-family: var(--kufi); font-weight: 600; font-size: 26px; margin-bottom: 18px; color: var(--cedar); }
-  .lede { font-size: 22px; line-height: 1.55; max-width: 32em; }
-
-  /* definition lists */
-  dl.facts { display: grid; grid-template-columns: 190px 1fr; border-top: 1px solid var(--line); }
-  dl.facts dt, dl.facts dd { padding: 16px 0; border-bottom: 1px solid var(--line); }
-  dl.facts dt { font-weight: 600; color: var(--cedar); padding-right: 20px; }
-  dl.facts dd { color: var(--ink); max-width: 38em; }
-
-  .cols-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
-
-  /* country strip */
-  .strip { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 3px solid var(--cedar); }
-  .strip div { padding: 20px 20px 20px 0; border-right: 1px solid var(--line); margin-right: 20px; }
-  .strip div:last-child { border-right: 0; margin-right: 0; }
-  .strip strong { display: block; font-family: var(--kufi); font-size: 30px; font-weight: 600; color: var(--cedar); line-height: 1.2; }
-  .strip span { font-size: 15px; color: var(--muted); }
-
-  /* music: names as typography */
-  .names { list-style: none; }
-  .names li { display: flex; justify-content: space-between; gap: 24px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--line); }
-  .names li:first-child { border-top: 1px solid var(--line); }
-  .names b { font-family: var(--kufi); font-weight: 500; font-size: clamp(24px, 3vw, 34px); color: var(--ink); }
-  .names span { font-size: 15px; color: var(--muted); text-align: right; max-width: 22em; }
-
-  /* menu */
-  .menu { display: grid; grid-template-columns: 1fr 1fr; column-gap: 56px; }
-  .menu div { display: grid; grid-template-columns: 1fr auto; gap: 4px 16px; padding: 18px 0; border-bottom: 1px dashed var(--line); }
-  .menu h4 { font-family: var(--kufi); font-weight: 600; font-size: 22px; }
-  .menu .ar { font-size: 24px; color: var(--tile); }
-  .menu p { grid-column: 1 / -1; color: var(--muted); font-size: 16px; }
-
-  /* map */
-  .mapwrap { position: relative; border: 1px solid var(--cedar); }
-  .mapwrap iframe { display: block; width: 100%; height: 460px; border: 0; filter: saturate(.75); }
-  .mapnote { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 18px; background: var(--cedar); color: var(--stone); font-size: 15px; }
-  .mapnote a { color: var(--stone); text-underline-offset: 3px; }
-
-  /* photos */
-  .frames { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; }
-  .frame { aspect-ratio: 4 / 5; background: var(--stone-2); display: grid; align-content: end; justify-items: start; gap: 6px; padding: 16px; font-size: 15px; color: var(--muted); border-top: 6px solid var(--sea); }
-  .frame:first-child { aspect-ratio: auto; border-top-color: var(--tile); }
-  .frame.video { grid-column: 1 / -1; aspect-ratio: 16 / 6; border-top-color: var(--cedar); }
-  .todo { background: #F6E9B8; padding: 0 4px; color: #5A4A0E; }
-
-  /* teacher letter */
-  .letter { background: #F7F7F2; border-left: 6px solid var(--tile); padding: 40px 48px; max-width: 760px; }
-  .letter .greet { font-family: var(--kufi); font-size: 28px; color: var(--cedar); }
-  .letter h3 { margin: 18px 0 4px; font-size: 20px; color: var(--ink); }
-  .letter .sig { margin-top: 32px; font-family: var(--kufi); font-size: 24px; color: var(--cedar); }
-  .letter .sig small { display: block; font-family: var(--text); font-size: 15px; color: var(--muted); }
-
-  /* consent: real sequence */
-  ol.process { list-style: none; counter-reset: p; display: grid; grid-template-columns: repeat(4, 1fr); border-top: 3px solid var(--cedar); }
-  ol.process li { counter-increment: p; padding: 20px 20px 0 0; }
-  ol.process li::before { content: counter(p); display: block; font-family: var(--kufi); font-size: 44px; font-weight: 700; color: var(--tile); line-height: 1; margin-bottom: 10px; }
-  ol.process h4 { font-family: var(--kufi); font-weight: 600; font-size: 20px; margin-bottom: 6px; }
-  ol.process p { font-size: 16px; color: var(--muted); }
-  .tally { display: flex; align-items: baseline; gap: 20px; padding-top: 28px; border-top: 1px solid var(--line); }
-  .tally b { font-family: var(--kufi); font-size: 64px; line-height: 1; color: var(--cedar); }
-
-  /* team */
-  .roster { display: grid; grid-template-columns: repeat(5, 1fr); border-top: 1px solid var(--line); }
-  .roster div { padding: 20px 16px 20px 0; border-bottom: 1px solid var(--line); }
-  .roster b { display: block; font-family: var(--kufi); font-size: 22px; font-weight: 600; }
-  .roster span { font-size: 15px; color: var(--muted); }
-
-  /* close */
-  .close { background: var(--cedar); color: var(--stone); padding: 96px 0; }
-  .close .ar { display: block; font-size: clamp(56px, 9vw, 120px); line-height: 1; text-align: left; color: var(--stone); }
-  .close p { margin-top: 24px; font-size: 22px; max-width: 30em; color: #CFDCD4; }
-  .close .scripts { margin-top: 56px; display: flex; flex-wrap: wrap; gap: 12px 48px; font-family: var(--kufi); font-size: 28px; }
-  .close .scripts span { border-bottom: 2px solid var(--tile); }
-
-  footer { background: var(--ink); color: #A7B0AD; padding: 32px 0; font-size: 14px; }
-  footer .page { display: flex; flex-wrap: wrap; gap: 16px 40px; justify-content: space-between; align-items: center; }
-  footer img { height: 40px; width: auto; background: #fff; padding: 4px 8px; }
-  footer .src { flex-basis: 100%; color: #7E8885; }
-  footer .src a { color: #C7D3CF; }
-
-  @media (max-width: 960px) {
-    .hero .page, .chapter .page, .cols-2 { grid-template-columns: 1fr; }
-    .hero .page { gap: 32px; }
-    .hero-ar { text-align: left; direction: rtl; }
-    .chapter { padding: 64px 0; }
-    .chapter .page { gap: 32px; }
-    .chapter-head { position: static; }
-    .strip, ol.process { grid-template-columns: 1fr 1fr; }
-    .roster { grid-template-columns: repeat(3, 1fr); }
-    .top nav { display: none; }
-  }
-  @media (max-width: 600px) {
-    body { font-size: 17px; }
-    dl.facts { grid-template-columns: 1fr; }
-    dl.facts dt { border-bottom: 0; padding-bottom: 0; }
-    .menu, .strip, ol.process { grid-template-columns: 1fr; }
-    .strip div { border-right: 0; border-bottom: 1px solid var(--line); margin-right: 0; }
-    .frames { grid-template-columns: 1fr 1fr; }
-    .frame:first-child { grid-column: 1 / -1; aspect-ratio: 4 / 3; }
-    .roster { grid-template-columns: 1fr 1fr; }
-    .names li { flex-direction: column; gap: 2px; }
-    .names span { text-align: left; }
-    .letter { padding: 28px 24px; }
-  }
-</style>
+<link rel="stylesheet" href="style.css">
+<script type="module" src="https://cdn.jsdelivr.net/npm/@google/model-viewer@3/dist/model-viewer.min.js"></script>
 </head>
 <body>
 
-<header class="top">
-  <div class="page">
-    <a class="mark" href="#">WELNOVA</a>
-    <nav aria-label="Sections">
-      <a href="#city">City</a>
-      <a href="#school">School</a>
-      <a href="#teacher">Teacher</a>
-      <a href="#consent">Consent</a>
-      <a href="#team">Team</a>
-    </nav>
+<div id="viewport" aria-hidden="true">
+  <div id="scene"></div>
+</div>
+
+<!-- HUD -->
+<div id="hud" hidden>
+  <div class="hud-map">
+    <canvas id="minimap" width="296" height="64" aria-label="Map of the house. Tap a room to go there."></canvas>
+    <p id="room-label"></p>
   </div>
-</header>
-
-<main>
-
-<section class="hero">
-  <div class="page">
-    <div>
-      <p class="ar hero-ar" lang="ar">أهلا من كفرشيما</p>
-      <h1>Hello from Kfarchima, Lebanon</h1>
-      <p class="intro">We are the WELNOVA team from Collège Notre Dame des Sœurs Antonines. This is our introduction for Week 1: the town we live in, the school we learn in, and the teacher who leads us.</p>
-      <p class="when">Week 1 of the WELNOVA eTwinning project, 23–29 November 2026, with partners in Ukraine, Bulgaria and Turkey.</p>
-    </div>
-
-    <svg class="facade" viewBox="0 0 640 520" role="img" aria-labelledby="facade-t">
-      <title id="facade-t">A traditional Lebanese house with a red tiled roof and three arched windows. Each window opens a section: city, school, teacher.</title>
-      <!-- roof -->
-      <polygon points="40,150 320,40 600,150" fill="#B3261E"/>
-      <g stroke="#8E1D17" stroke-width="2" opacity=".55">
-        <line x1="110" y1="123" x2="530" y2="123"/>
-        <line x1="180" y1="95" x2="460" y2="95"/>
-        <line x1="250" y1="68" x2="390" y2="68"/>
-      </g>
-      <rect x="28" y="148" width="584" height="12" fill="#8E1D17"/>
-      <!-- wall -->
-      <rect x="60" y="160" width="520" height="360" fill="#DFE1D7"/>
-      <g stroke="#C9CCBF" stroke-width="1.5">
-        <line x1="60" y1="210" x2="580" y2="210"/><line x1="60" y1="260" x2="580" y2="260"/>
-        <line x1="60" y1="310" x2="580" y2="310"/><line x1="60" y1="360" x2="580" y2="360"/>
-        <line x1="60" y1="410" x2="580" y2="410"/><line x1="60" y1="460" x2="580" y2="460"/>
-      </g>
-      <!-- three arches -->
-      <a href="#city" aria-label="Our city">
-        <path d="M100 520 V300 Q100 225 165 205 Q230 225 230 300 V520 Z" fill="#ECEDE6"/>
-        <path class="glass" d="M112 520 V302 Q112 236 165 219 Q218 236 218 302 V520 Z"/>
-        <text x="165" y="490" text-anchor="middle">City</text>
-      </a>
-      <a href="#school" aria-label="Our school">
-        <path d="M255 520 V290 Q255 205 320 185 Q385 205 385 290 V520 Z" fill="#ECEDE6"/>
-        <path class="glass" d="M267 520 V292 Q267 216 320 199 Q373 216 373 292 V520 Z"/>
-        <text x="320" y="490" text-anchor="middle">School</text>
-      </a>
-      <a href="#teacher" aria-label="Our teacher">
-        <path d="M410 520 V300 Q410 225 475 205 Q540 225 540 300 V520 Z" fill="#ECEDE6"/>
-        <path class="glass" d="M422 520 V302 Q422 236 475 219 Q528 236 528 302 V520 Z"/>
-        <text x="475" y="490" text-anchor="middle">Teacher</text>
-      </a>
-      <!-- slender columns -->
-      <rect x="236" y="290" width="13" height="230" fill="#C9CCBF"/>
-      <rect x="391" y="290" width="13" height="230" fill="#C9CCBF"/>
-    </svg>
+  <div class="hud-actions">
+    <button type="button" id="btn-rooms" aria-haspopup="dialog">Rooms</button>
+    <button type="button" id="btn-ar">AR school</button>
+    <button type="button" id="btn-gyro" hidden>Look with phone</button>
+    <button type="button" id="btn-classic">Read as page</button>
   </div>
-  <div class="ground" aria-hidden="true"></div>
-</section>
+  <p id="hint"></p>
+  <div id="stick" aria-hidden="true"><div id="stick-knob"></div></div>
+</div>
 
-<!-- CITY -->
-<section class="chapter" id="city">
-  <div class="page">
-    <div class="chapter-head">
-      <span class="ar" lang="ar">مدينتنا</span>
-      <h2>Our city</h2>
-      <p>Where we live, how it looks on the map, and what it is known for.</p>
+<div id="toast" aria-live="polite"></div>
+
+<!-- Intro -->
+<section id="intro" aria-labelledby="intro-title">
+  <div class="intro-inner">
+    <p class="intro-ar" lang="ar">بيت كفرشيما</p>
+    <h1 id="intro-title">Bayt Kfarchima</h1>
+    <p class="intro-sub">A walk through a Lebanese house in Kfarchima. Each room introduces our city, our school or our teacher for Week 1 of WELNOVA.</p>
+    <div class="intro-buttons">
+      <button type="button" id="btn-enter" class="primary">Enter the house</button>
+      <button type="button" id="btn-intro-classic">Read it as a page</button>
     </div>
-    <div class="body">
-      <p class="lede">Kfarchima sits on the first hills above Beirut, close enough to the capital to be part of it, high enough to see the Mediterranean from its rooftops.</p>
-
-      <div>
-        <h3>Lebanon in four lines</h3>
-        <div class="strip">
-          <div><strong>Beirut</strong><span>our capital, a few minutes away</span></div>
-          <div><strong>Cedar</strong><span>the tree at the centre of our flag</span></div>
-          <div><strong>Arabic</strong><span>with French and English spoken widely</span></div>
-          <div><strong>Byblos</strong><span>one of the oldest cities in the world</span></div>
-        </div>
-      </div>
-
-      <div>
-        <h3>Geography</h3>
-        <dl class="facts">
-          <dt>Location</dt><dd>Baabda District, Mount Lebanon Governorate, southeast of Beirut and part of Greater Beirut.</dd>
-          <dt>Size</dt><dd>About 5 km², home to around 70,000 people.</dd>
-          <dt>Landscape</dt><dd>Hillside streets overlooking the Mediterranean, with a mild climate.</dd>
-          <dt>Neighbours</dt><dd>Hadath, Choueifat, Baabda, and Bsous with its Silk Museum.</dd>
-          <dt>Name</dt><dd>Also written Kfarshima, <span class="ar" lang="ar">كفرشيما</span> in Arabic.</dd>
-        </dl>
-      </div>
-
-      <div class="mapwrap">
-        <iframe title="Map of Kfarchima, Lebanon" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=35.505%2C33.800%2C35.560%2C33.832&amp;layer=mapnik&amp;marker=33.8153%2C35.5333"></iframe>
-        <div class="mapnote">
-          <span>Kfarchima, 33°48′55″N 35°32′0″E</span>
-          <span><a href="https://www.openstreetmap.org/?mlat=33.8153&amp;mlon=35.5333#map=15/33.8153/35.5333" target="_blank" rel="noopener">Open in OpenStreetMap</a> &nbsp; <a href="https://www.google.com/maps/search/?api=1&amp;query=Kfarchima%2C%20Lebanon" target="_blank" rel="noopener">Open in Google Maps</a></span>
-        </div>
-      </div>
-
-      <div>
-        <h3>History</h3>
-        <dl class="facts">
-          <dt>Long before us</dt><dd>Many civilizations passed through these hills, and each left something behind.</dd>
-          <dt>Writers and thinkers</dt><dd>Saleem Takla, born here, co-founded Egypt’s Al-Ahram newspaper. The philosopher Shibli Shumayyil also came from Kfarchima.</dd>
-          <dt>Living together</dt><dd>Christian and Muslim families live side by side, and the town has seven churches from different traditions.</dd>
-          <dt>Work</dt><dd>Local factories make ceramics, paper, dairy, sweets, marble and soap.</dd>
-        </dl>
-      </div>
-
-      <div>
-        <h3>A town that sings</h3>
-        <p style="margin-bottom:20px;max-width:36em;color:var(--muted)">Ask anyone in Lebanon about Kfarchima and they will name a singer. These artists all come from here.</p>
-        <ul class="names">
-          <li><b>Philemon Wehbe</b><span>Composer who wrote songs for Fairouz</span></li>
-          <li><b>Majida El Roumi</b><span>One of the best-known voices in the Arab world</span></li>
-          <li><b>Melhem Barakat</b><span>Singer and stage actor who toured four continents</span></li>
-          <li><b>Issam Rajji</b><span>Singer and composer who worked with the Rahbani brothers</span></li>
-          <li><b>Marie Sleiman</b><span>Singer, first in Mount Lebanon on a 1980 national talent show</span></li>
-        </ul>
-      </div>
-
-      <div>
-        <h3>On our table</h3>
-        <div class="menu">
-          <div><h4>Manakish</h4><span class="ar" lang="ar">منقوشة</span><p>Flatbread with za’atar and olive oil. Breakfast for most of Lebanon.</p></div>
-          <div><h4>Tabbouleh</h4><span class="ar" lang="ar">تبولة</span><p>Parsley, tomato, bulgur and a lot of lemon.</p></div>
-          <div><h4>Hummus</h4><span class="ar" lang="ar">حمص</span><p>Chickpeas and tahini, shared with bread at almost every meal.</p></div>
-          <div><h4>Knefeh</h4><span class="ar" lang="ar">كنافة</span><p>Warm sweet cheese pastry with syrup, often eaten in a sesame bun.</p></div>
-        </div>
-      </div>
-    </div>
+    <p class="intro-keys" id="intro-keys"></p>
+    <p class="intro-foot">Collège Notre Dame des Sœurs Antonines – Kfarchima, Lebanon. eTwinning project WELNOVA, 2026–2027.</p>
   </div>
 </section>
 
-<!-- SCHOOL -->
-<section class="chapter" id="school">
-  <div class="page">
-    <div class="chapter-head">
-      <span class="ar" lang="ar">مدرستنا</span>
-      <h2>Our school</h2>
-      <p>Collège Notre Dame des Sœurs Antonines – Kfarchima, also called Antonines Sisters High School.</p>
-    </div>
-    <div class="body">
-      <p class="lede">Our school was founded by the Congregation of the Antonine Sisters, a Lebanese order that runs schools across the country. Students can stay here from preschool until they finish secondary school.</p>
+<!-- Rooms menu -->
+<dialog id="rooms-dialog" aria-labelledby="rooms-title">
+  <h2 id="rooms-title">Go to a room</h2>
+  <ol id="rooms-list"></ol>
+  <button type="button" class="close" data-close>Close</button>
+</dialog>
 
-      <dl class="facts">
-        <dt>Founded by</dt><dd>The Congregation of the Antonine Sisters</dd>
-        <dt>Levels</dt><dd>Preschool to secondary</dd>
-        <dt>Founded in</dt><dd><span class="todo">[year]</span></dd>
-        <dt>Students</dt><dd>About <span class="todo">[number]</span></dd>
-        <dt>Languages</dt><dd><span class="todo">[Arabic, French, English]</span></dd>
-        <dt>What we value</dt><dd>Moral and spiritual growth alongside academic learning.</dd>
-        <dt>Beyond class</dt><dd>Clubs, activities and field trips. In 2023, 73 students from Grades 9 and 12 visited a national institution to learn how it supports Lebanon’s economy.</dd>
-        <dt>Staying in touch</dt><dd>A school app sends families news, timetables, homework and announcements.</dd>
-      </dl>
-
-      <div>
-        <h3>Inside the school</h3>
-        <div class="frames">
-          <div class="frame">Photo: the school building <span class="todo">[add]</span></div>
-          <div class="frame">Photo: a classroom <span class="todo">[add]</span></div>
-          <div class="frame">Photo: the courtyard <span class="todo">[add]</span></div>
-          <div class="frame video">Video: a one-minute walk through the school <span class="todo">[add]</span></div>
-        </div>
-        <p style="margin-top:14px;font-size:15px;color:var(--muted)">All photos and videos show spaces and hands at work, never students’ faces.</p>
-      </div>
-    </div>
+<!-- AR -->
+<dialog id="ar-dialog" aria-labelledby="ar-title">
+  <div class="ar-head">
+    <h2 id="ar-title">Our future school, in your room</h2>
+    <button type="button" class="close" data-close>Close</button>
   </div>
-</section>
+  <p class="ar-sub">The WELNOVA Eco-Future School: four floors designed by four international teams, a rooftop garden and a rainwater basement. Turn it with your finger, or place it on your table in AR.</p>
+  <model-viewer id="school-model" src="assets/welnova-school.glb" alt="3D model of the WELNOVA Eco-Future School with four coloured floors, a rooftop garden and a rainwater basement"
+    ar ar-modes="webxr scene-viewer quick-look" ar-scale="auto" camera-controls touch-action="pan-y"
+    auto-rotate auto-rotate-delay="1500" rotation-per-second="18deg" shadow-intensity="1" exposure="1.05"
+    camera-orbit="-25deg 72deg 1.1m" min-camera-orbit="auto auto 0.5m" max-camera-orbit="auto auto 2m">
+    <button slot="hotspot-roof" class="hotspot" data-position="0 0.38 0.11" data-normal="0 0 1">Rooftop garden</button>
+    <button slot="hotspot-f4" class="hotspot h4" data-position="0.17 0.32 0.11" data-normal="0 0 1">Floor 4: Environment</button>
+    <button slot="hotspot-f3" class="hotspot h3" data-position="-0.17 0.25 0.11" data-normal="0 0 1">Floor 3: Digital learning</button>
+    <button slot="hotspot-f2" class="hotspot h2" data-position="0.17 0.17 0.11" data-normal="0 0 1">Floor 2: Well-being</button>
+    <button slot="hotspot-f1" class="hotspot h1" data-position="-0.17 0.10 0.11" data-normal="0 0 1">Floor 1: Inclusion</button>
+    <button slot="hotspot-base" class="hotspot hb" data-position="0.17 0.03 0.11" data-normal="0 0 1">Basement: rainwater</button>
+    <button slot="ar-button" class="ar-launch">View in your room</button>
+  </model-viewer>
+  <p class="ar-note" id="ar-note">AR works on phones and tablets: iPhone and iPad open it in Quick Look, Android in Scene Viewer.</p>
+</dialog>
 
-<!-- TEACHER -->
-<section class="chapter" id="teacher">
-  <div class="page">
-    <div class="chapter-head">
-      <span class="ar" lang="ar">معلّمتنا</span>
-      <h2>Our teacher</h2>
-      <p>A short letter from the teacher who leads WELNOVA at our school.</p>
-    </div>
-    <div class="body">
-      <article class="letter">
-        <p class="greet">Dear partners,</p>
-        <h3>Who I am</h3>
-        <p><span class="todo">[Years of teaching, subjects and classes taught, any earlier eTwinning or international projects]</span></p>
-        <h3>What I enjoy</h3>
-        <p><span class="todo">[Interests outside the classroom]</span></p>
-        <h3>What I hope WELNOVA brings</h3>
-        <p><span class="todo">[What she hopes students will gain from the project]</span></p>
-        <p class="sig">Mary Safadi<small>English Department, Collège Notre Dame des Sœurs Antonines – Kfarchima</small></p>
-      </article>
-    </div>
+<!-- Classic page -->
+<dialog id="classic-dialog" aria-labelledby="classic-title">
+  <div class="classic-head">
+    <h2 id="classic-title">Bayt Kfarchima, as a page</h2>
+    <button type="button" class="close" data-close>Back to the house</button>
   </div>
-</section>
+  <div id="classic-body"></div>
+</dialog>
 
-<!-- CONSENT -->
-<section class="chapter" id="consent">
-  <div class="page">
-    <div class="chapter-head">
-      <span class="ar" lang="ar">موافقة الأهل</span>
-      <h2>Parental consent</h2>
-      <p>Every student joins with written permission from their parents, on a form written in English.</p>
-    </div>
-    <div class="body">
-      <ol class="process">
-        <li><h4>Sent home</h4><p>Parents receive the form with the project’s aims and activities.</p></li>
-        <li><h4>Signed</h4><p>Parents approve taking part, and the use of photos and student work on TwinSpace.</p></li>
-        <li><h4>Hidden</h4><p>Surnames, signatures and contact details are covered.</p></li>
-        <li><h4>Uploaded</h4><p>Forms go to TwinSpace with only the teacher’s name and school name.</p></li>
-      </ol>
-      <div class="tally">
-        <b><span class="todo">[X]</span> / 5</b>
-        <p>forms collected. Students appear by first name only.</p>
-      </div>
-    </div>
-  </div>
-</section>
+<noscript><p style="padding:2rem;font:18px sans-serif">This house needs JavaScript to walk through.</p></noscript>
 
-<!-- TEAM -->
-<section class="chapter" id="team">
-  <div class="page">
-    <div class="chapter-head">
-      <span class="ar" lang="ar">فريقنا</span>
-      <h2>Our five</h2>
-      <p>The students from our school who join the international teams.</p>
-    </div>
-    <div class="body">
-      <div class="roster">
-        <div><b class="todo">[First name]</b><span>[one line about them]</span></div>
-        <div><b class="todo">[First name]</b><span>[one line about them]</span></div>
-        <div><b class="todo">[First name]</b><span>[one line about them]</span></div>
-        <div><b class="todo">[First name]</b><span>[one line about them]</span></div>
-        <div><b class="todo">[First name]</b><span>[one line about them]</span></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<section class="close">
-  <div class="page">
-    <span class="ar" lang="ar">أهلا وسهلا</span>
-    <p>Welcome. We can’t wait to meet you and start designing our future school together.</p>
-    <div class="scripts" aria-label="Partner countries">
-      <span lang="ar">لبنان</span>
-      <span lang="uk">Україна</span>
-      <span lang="bg">България</span>
-      <span lang="tr">Türkiye</span>
-    </div>
-  </div>
-</section>
-
-</main>
-
-<footer>
-  <div class="page">
-    <img src="assets/etwinning-logo.png" alt="eTwinning" onerror="this.replaceWith(Object.assign(document.createElement('strong'),{textContent:'eTwinning'}))">
-    <span>WELNOVA, Collège Notre Dame des Sœurs Antonines – Kfarchima, 2026–2027</span>
-    <p class="src">Sources: <a href="https://en.wikipedia.org/wiki/Kfarshima" target="_blank" rel="noopener">Wikipedia</a>, <a href="https://nna-leb.gov.lb/en/hotreports/223259/kfarshima-birthplace-of-many-great-lebanese-singer" target="_blank" rel="noopener">National News Agency</a>, <a href="https://enfantsdusoleil.com/en/clubs/college-notre-dame-des-soeurs-antonines-kfarchima-2/" target="_blank" rel="noopener">Enfants du Soleil</a>, <a href="https://www.regie.com.lb/Article/698/the-antonine-sisters-high-school-kfarchima-student/en" target="_blank" rel="noopener">Régie Libanaise</a>. Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors.</p>
-  </div>
-</footer>
-
+<script src="app.js"></script>
 </body>
 </html>
