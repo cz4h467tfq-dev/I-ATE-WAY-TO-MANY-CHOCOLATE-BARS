@@ -66,7 +66,7 @@
       id: 'kfarchima', en: 'Kfarchima', ar: 'كفرشيما', theme: 'house',
       panels: [
         { wall: 'N', u: 750, y: -350, w: 1400, h: 560, cls: 'screen', map: true, html: `
-          <iframe title="Map of Kfarchima, Lebanon" loading="lazy" style="height:430px" src="https://www.openstreetmap.org/export/embed.html?bbox=35.505%2C33.800%2C35.560%2C33.832&amp;layer=mapnik&amp;marker=33.8153%2C35.5333"></iframe>
+          <iframe title="Map of Kfarchima, Lebanon" style="height:430px" src="about:blank" data-src="https://www.openstreetmap.org/export/embed.html?bbox=35.505%2C33.800%2C35.560%2C33.832&amp;layer=mapnik&amp;marker=33.8153%2C35.5333"></iframe>
           <div class="cap"><span>Kfarchima, 33°48′55″N 35°32′0″E</span><span><a href="https://www.openstreetmap.org/?mlat=33.8153&amp;mlon=35.5333#map=15/33.8153/35.5333" target="_blank" rel="noopener">OpenStreetMap</a> &nbsp; <a href="https://www.google.com/maps/search/?api=1&amp;query=Kfarchima%2C%20Lebanon" target="_blank" rel="noopener">Google Maps</a></span></div>` },
         { wall: 'S', u: 750, y: -350, w: 1380, h: 500, cls: 'plaque', html: `
           <span class="tag-ar" lang="ar">جغرافيا</span>
@@ -222,19 +222,32 @@
   const scene = document.getElementById('scene');
   const faces = [];   // { el, rooms: [i...] }
 
+  // Memory: Safari keeps a full-resolution bitmap for every 3D surface. Each surface is drawn
+  // small (w / q) and scaled up, so phones with sharp screens store far fewer pixels.
+  const DPR = window.devicePixelRatio || 1;
+  const Q_TEX = DPR >= 2 ? 3.5 : 1.5;     // floors, walls, ceilings: textures only
+  const Q_TXT = DPR >= 2 ? 2 : 1;         // panels with text
+
   function face(cls, w, h, x, y, z, ry, rx, rooms, extra = {}) {
+    const q = extra.q || Q_TEX;
     const el = document.createElement('div');
-    el.className = 'f ' + cls;
-    el.style.width = w + 'px';
-    el.style.height = h + 'px';
-    el.style.marginLeft = (-w / 2) + 'px';
-    el.style.marginTop = (-h / 2) + 'px';
-    el.style.transform = `translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg) rotateX(${rx}deg)`;
-    if (extra.bg) el.style.background = extra.bg;
-    if (extra.html) el.innerHTML = extra.html;
+    el.className = 'f';
+    el.style.width = (w / q) + 'px';
+    el.style.height = (h / q) + 'px';
+    el.style.marginLeft = (-w / q / 2) + 'px';
+    el.style.marginTop = (-h / q / 2) + 'px';
+    el.style.transform = `translate3d(${x}px,${y}px,${z}px) rotateY(${ry}deg) rotateX(${rx}deg) scale(${q})`;
+    const inner = document.createElement('div');
+    inner.className = 'fi ' + cls;
+    inner.style.width = w + 'px';
+    inner.style.height = h + 'px';
+    inner.style.transform = `scale(${1 / q})`;
+    if (extra.bg) inner.style.background = extra.bg;
+    if (extra.html) inner.innerHTML = extra.html;
+    el.appendChild(inner);
     scene.appendChild(el);
     faces.push({ el, rooms });
-    return el;
+    return inner;
   }
 
   const archBG = (() => {
@@ -294,7 +307,7 @@
       if (p.wall === 'S') { x = x0 + 3 * S - p.u; z = 4 * S - off; ry = 180; }
       if (p.wall === 'W') { x = x0 + off; z = 4 * S - p.u; ry = 90; }
       if (p.wall === 'E') { x = x0 + 3 * S - off; z = S + p.u; ry = -90; }
-      face('panel ' + p.cls, p.w, p.h, x, p.y, z, ry, 0, r, { html: p.html });
+      face('panel ' + p.cls, p.w, p.h, x, p.y, z, ry, 0, r, { html: p.html, q: Q_TXT });
     });
   });
 
@@ -325,9 +338,13 @@
     currentRoom = ri;
     for (const f of faces) {
       const d = Math.min(...f.rooms.map((k) => Math.abs(k - ri)));
-      f.el.classList.toggle('hidden', d > 2);
-      f.el.style.filter = d === 0 ? '' : d === 1 ? 'brightness(.82)' : 'brightness(.6)';
+      f.el.classList.toggle('hidden', d > 1);
     }
+    // the live map only runs while you are in its room
+    document.querySelectorAll('#scene iframe[data-src]').forEach((fr) => {
+      const want = ROOMS[ri].id === 'kfarchima' ? fr.dataset.src : 'about:blank';
+      if (fr.getAttribute('src') !== want) fr.setAttribute('src', want);
+    });
     const room = ROOMS[ri];
     document.getElementById('room-label').innerHTML = `${ri + 1}. ${room.en} &nbsp;<b lang="ar" dir="rtl">${room.ar}</b>`;
     if (started) showToast(room);
@@ -543,11 +560,19 @@
 
   /* ---------- AR dialog ---------- */
   const arDlg = document.getElementById('ar-dialog');
+  let mvLoading = false;
   function openAR() {
     arDlg.showModal();
-    if (!customElements.get('model-viewer')) {
+    if (customElements.get('model-viewer') || mvLoading) return;
+    mvLoading = true;
+    const sc = document.createElement('script');
+    sc.type = 'module';
+    sc.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3/dist/model-viewer.min.js';
+    sc.onerror = () => {
+      mvLoading = false;
       document.getElementById('ar-note').textContent = 'The 3D viewer could not load. Check your internet connection and try again.';
-    }
+    };
+    document.head.appendChild(sc);
   }
   document.getElementById('btn-ar').addEventListener('click', openAR);
 
@@ -560,7 +585,7 @@
       classicBody.innerHTML = ROOMS.map((room, i) => `
         <section>
           <h3 class="room-title">${i + 1}. ${room.en}<span class="ar" lang="ar">${room.ar}</span></h3>
-          ${room.panels.map((p) => `<div class="panel ${p.cls}">${p.html}</div>`).join('')}
+          ${room.panels.map((p) => `<div class="panel ${p.cls}">${p.html.replace('src="about:blank" data-src=', 'loading="lazy" src=')}</div>`).join('')}
         </section>`).join('');
       classicBuilt = true;
     }
