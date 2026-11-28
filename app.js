@@ -612,7 +612,6 @@
   const cardAr = document.getElementById('card-ar');
   const cardStep = document.getElementById('card-step');
   const btnNext = document.getElementById('card-next');
-  const btnHear = document.getElementById('card-hear');
   let readTimer = null;
 
   function openCard(room, poi, idx, total) {
@@ -633,7 +632,6 @@
     btnNext.classList.remove('filling'); void btnNext.offsetWidth; btnNext.classList.add('filling');
     clearTimeout(readTimer);
     readTimer = setTimeout(() => { btnNext.disabled = false; btnNext.focus({ preventScroll: true }); }, ms);
-    if (voiceOn) speak(poi.title + '. ' + cardBody.textContent);
     cardBody.scrollTop = 0;
   }
 
@@ -641,42 +639,13 @@
     card.hidden = true;
     cardOpen = false;
     clearTimeout(readTimer);
-    stopSpeaking();
   }
 
   btnNext.addEventListener('click', () => { if (!btnNext.disabled) nextPoi(); });
-  btnHear.addEventListener('click', () => speak(cardTitle.textContent + '. ' + cardBody.textContent));
   addEventListener('keydown', (e) => {
     if (!cardOpen || card.hidden) return;
     if ((e.key === 'Enter' || e.key === ' ') && !btnNext.disabled && !e.target.closest('button:not(#card-next), a, iframe')) { e.preventDefault(); nextPoi(); }
   });
-
-  /* ---------- Anna's voice ---------- */
-  const canSpeak = 'speechSynthesis' in window;
-  let voiceOn = canSpeak;
-  let voice = null;
-  function pickVoice() {
-    const vs = speechSynthesis.getVoices();
-    voice = vs.find((v) => /^en/i.test(v.lang) && /female|samantha|karen|moira|tessa|serena|kate|libby|sonia|zira|aria|jenny/i.test(v.name)) ||
-      vs.find((v) => /^en/i.test(v.lang)) || null;
-  }
-  if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
-  function speak(text) {
-    if (!canSpeak) return;
-    speechSynthesis.cancel();
-    const clean = text.replace(/\[[^\]]*\]/g, ' ').replace(/[؀-ۿ]+/g, ' ').replace(/\s+/g, ' ').trim();
-    const u = new SpeechSynthesisUtterance(clean);
-    if (voice) u.voice = voice;
-    u.lang = voice ? voice.lang : 'en-GB';
-    u.rate = 1; u.pitch = 1.25;
-    speechSynthesis.speak(u);
-  }
-  function stopSpeaking() { if (canSpeak) speechSynthesis.cancel(); }
-  const btnVoice = document.getElementById('btn-voice');
-  const setVoiceLabel = () => { btnVoice.textContent = voiceOn ? 'Anna’s voice: on' : 'Anna’s voice: off'; btnVoice.setAttribute('aria-pressed', String(voiceOn)); };
-  if (!canSpeak) { btnVoice.hidden = true; btnHear.hidden = true; }
-  setVoiceLabel();
-  btnVoice.addEventListener('click', () => { voiceOn = !voiceOn; setVoiceLabel(); if (!voiceOn) stopSpeaking(); });
 
   /* ---------- short lines from Anna ---------- */
   const toast = document.getElementById('toast');
@@ -693,7 +662,6 @@
     sayBox.classList.add('on');
     clearTimeout(sayTimer);
     sayTimer = setTimeout(() => sayBox.classList.remove('on'), 3800);
-    if (voiceOn && started && !cardOpen) speak(msg);
   }
 
   /* =====================================================================
@@ -960,8 +928,8 @@
   const touch = isTouch();
   if (touch) document.body.classList.add('touch');
   document.getElementById('intro-keys').textContent = touch
-    ? 'Left thumb walks, right thumb looks around. Anna the ghost will show you everything, so turn your sound on.'
-    : 'Walk with W A S D or the arrow keys and drag to look. Anna the ghost will show you everything, so turn your sound on.';
+    ? 'Left thumb walks, right thumb looks around. Anna the ghost will show you everything.'
+    : 'Walk with W A S D or the arrow keys and drag to look. Anna the ghost will show you everything.';
   hint.textContent = touch ? 'Left thumb: walk · Right thumb: look' : 'W A S D to walk · drag to look';
 
   document.getElementById('btn-enter').addEventListener('click', () => {
@@ -969,7 +937,6 @@
     document.getElementById('intro').classList.add('gone');
     document.getElementById('hud').hidden = false;
     audio();
-    if (canSpeak) speechSynthesis.speak(new SpeechSynthesisUtterance(''));   // lets iOS speak later
     showToast(ROOMS[currentRoom]);
   });
 
