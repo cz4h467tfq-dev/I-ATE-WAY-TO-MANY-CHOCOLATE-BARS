@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Bayt Kfarchima – WELNOVA, Lebanon</title>
+<title>Bayt Kfarchima – a tour with Anna – WELNOVA, Lebanon</title>
 <meta name="description" content="Walk through a Lebanese house in Kfarchima: our city, our school and our teacher, for the WELNOVA eTwinning project. With an AR model of our future school.">
 <meta name="theme-color" content="#123D2C">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -27,20 +27,36 @@
     <button type="button" id="btn-rooms" aria-haspopup="dialog">Rooms</button>
     <button type="button" id="btn-ar">AR school</button>
     <button type="button" id="btn-gyro" hidden>Look with phone</button>
-    <button type="button" id="btn-classic">Read as page</button>
+    <button type="button" id="btn-voice" aria-pressed="true">Anna’s voice: on</button>
   </div>
   <p id="hint"></p>
   <div id="stick" aria-hidden="true"><div id="stick-knob"></div></div>
 </div>
 
 <div id="toast" aria-live="polite"></div>
+<p id="anna-says" aria-live="polite"></p>
+
+<!-- Anna's card: pops up in front of you -->
+<section id="card" role="dialog" aria-modal="true" aria-labelledby="card-title" hidden>
+  <div class="card-ghost" aria-hidden="true"></div>
+  <header>
+    <p id="card-step"></p>
+    <h2 id="card-title"></h2>
+    <p id="card-ar" lang="ar" dir="rtl"></p>
+  </header>
+  <div id="card-body" class="flat"></div>
+  <footer>
+    <button type="button" id="card-hear">Hear it again</button>
+    <button type="button" id="card-next" class="primary" disabled>Next</button>
+  </footer>
+</section>
 
 <!-- Intro -->
 <section id="intro" aria-labelledby="intro-title">
   <div class="intro-inner">
     <p class="intro-ar" lang="ar">بيت كفرشيما</p>
     <h1 id="intro-title">Bayt Kfarchima</h1>
-    <p class="intro-sub">A walk through a Lebanese house in Kfarchima. Each room introduces our city, our school or our teacher for Week 1 of WELNOVA.</p>
+    <p class="intro-sub">A walk through an old Lebanese house in Kfarchima. Anna, the friendly ghost who lives here, shows you our city, our school and our teacher for Week 1 of WELNOVA.</p>
     <div class="intro-buttons">
       <button type="button" id="btn-enter" class="primary">Enter the house</button>
       <button type="button" id="btn-intro-classic">Read it as a page</button>
@@ -53,8 +69,12 @@
 <!-- Rooms menu -->
 <dialog id="rooms-dialog" aria-labelledby="rooms-title">
   <h2 id="rooms-title">Go to a room</h2>
+  <p class="rooms-note">A room opens once Anna has shown you the one before it.</p>
   <ol id="rooms-list"></ol>
-  <button type="button" class="close" data-close>Close</button>
+  <div class="rooms-actions">
+    <button type="button" class="close" id="btn-restart">Start the tour again</button>
+    <button type="button" class="close" data-close>Close</button>
+  </div>
 </dialog>
 
 <!-- AR -->
@@ -90,6 +110,7 @@
 
 <noscript><p style="padding:2rem;font:18px sans-serif">This house needs JavaScript to walk through.</p></noscript>
 
+<script src="art.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

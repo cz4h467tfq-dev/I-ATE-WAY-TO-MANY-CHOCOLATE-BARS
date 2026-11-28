@@ -1,185 +1,237 @@
-/* Bayt Kfarchima: a first-person walk through a Lebanese house, built with CSS 3D.
-   World units are CSS pixels. x points east, z points south, y points down (floor at y = 0). */
+/* Bayt Kfarchima: a first-person walk through a Lebanese house, guided by Anna the ghost.
+   Built with CSS 3D. World units are CSS pixels: x east, z south, y down (floor at y = 0). */
 (() => {
   'use strict';
 
-  const S = 500;          // grid cell size
-  const H = 650;          // wall height
-  const EYE = 330;        // eye height above the floor
-  const RADIUS = 130;     // how close you can get to a wall
-  const ROOMS_N = 9;
-  const COLS = ROOMS_N * 4 + 1;
+  const S = 500, H = 650, EYE = 330, RADIUS = 130;
   const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  /* ---------- content: one entry per room ---------- */
+  const ART = window.ART;
   const T = (s) => `<span class="todo">${s}</span>`;
-  const cedarSVG = `<svg width="380" height="420" viewBox="0 0 380 420" aria-label="A cedar tree">
-      <rect x="176" y="330" width="28" height="80" fill="#5B3E28"/>
-      <path d="M190 20 L250 110 L215 104 L300 200 L240 192 L350 320 L30 320 L140 192 L80 200 L165 104 L130 110 Z" fill="#1E5A42"/>
-      <path d="M190 20 L215 104 L190 98 Z M140 192 L190 180 L240 192 L190 200 Z" fill="#123D2C"/>
-    </svg>`;
 
+  /* =====================================================================
+     CONTENT. u runs west to east (0–1500), v north to south (0–1500) inside a room.
+     decor hangs on walls, props stand in the room, pois are what Anna shows you.
+     ===================================================================== */
   const ROOMS = [
     {
-      id: 'welcome', en: 'Welcome', ar: 'أهلا', theme: 'house',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1340, h: 500, cls: 'painted', html: `
-          <p class="big-ar" lang="ar">أهلا من كفرشيما</p>
-          <h2 style="margin-top:14px">Hello from Kfarchima, Lebanon</h2>
-          <p style="margin-top:18px;max-width:30em;color:#2E3A36">We are the WELNOVA team from Collège Notre Dame des Sœurs Antonines. Walk through this house: each room shows our city, our school or our teacher.</p>` },
-        { wall: 'W', u: 750, y: -350, w: 1200, h: 470, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">ويلنوفا</span>
-          <h3>WELNOVA: well-being and new beginnings</h3>
-          <p style="margin-top:16px">An eTwinning project between schools in Lebanon, Ukraine, Bulgaria and Turkey. Together we design a happier, more inclusive, innovative and sustainable school.</p>
-          <p class="muted">Week 1, 23–29 November 2026: introduce our city, our school and our teacher.</p>` },
-        { wall: 'S', u: 750, y: -350, w: 1100, h: 470, cls: 'plaque', html: `
-          <h3>How to walk</h3>
-          <div class="keys">
-            <span><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></span><span>walk, or use the arrow keys</span>
-            <span><kbd>Drag</kbd></span><span>look around</span>
-            <span><kbd>Shift</kbd></span><span>walk faster</span>
-            <span><kbd>Phone</kbd></span><span>left thumb walks, right thumb looks</span>
-          </div>
-          <p class="muted" style="margin-top:22px">The arch on the east side leads to the next room.</p>` },
+      id: 'welcome', en: 'Welcome', ar: 'أهلا',
+      decor: [
+        { wall: 'N', at: 750, y: -380, w: 1200, h: 340, html: ART.W.calligraphy, txt: true },
+        { wall: 'W', at: 750, y: -360, w: 720, h: 400, html: ART.W.logo, txt: true },
+        { wall: 'S', at: 750, y: -360, w: 900, h: 360, html: ART.W.noticeboard, txt: true },
+      ],
+      props: [
+        { u: 420, v: 520, w: 120, h: 260, y: -H + 130, art: ART.S.lantern },
+        { u: 1080, v: 520, w: 120, h: 260, y: -H + 130, art: ART.S.lantern },
+        { u: 170, v: 180, w: 200, h: 300, art: ART.S.plant },
+        { u: 1330, v: 180, w: 200, h: 300, art: ART.S.plant },
+      ],
+      pois: [
+        { look: ['N', 750, -380], title: 'Ahlan! I’m Anna', ar: 'أنا آنا', html: `
+          <p>I’m the ghost of this old Lebanese house in Kfarchima, and I’ll be your guide.</p>
+          <p>In every room I’ll point at something and tell you about it. Read each card, then the arch to the next room opens.</p>
+          <p class="muted">Walk with W A S D or the arrow keys and drag to look. On a phone, your left thumb walks and your right thumb looks.</p>` },
+        { look: ['W', 750, -360], title: 'What is WELNOVA?', ar: 'ويلنوفا', html: `
+          <p><b>WELL</b> means well-being, happiness and a healthy school. <b>NOVA</b> means innovation and new beginnings.</p>
+          <p>WELNOVA is an eTwinning project between schools in <b>Lebanon, Ukraine, Bulgaria and Turkey</b>. Students from all four countries work in mixed teams to design a happier, more inclusive, innovative and sustainable school.</p>` },
+        { look: ['S', 750, -360], title: 'This is Week 1', ar: 'الأسبوع الأول', html: `
+          <p>Week 1 runs from <b>23 to 29 November 2026</b>. Each school introduces:</p>
+          <ul class="ticks"><li>its city</li><li>its school</li><li>its teacher</li><li>its parental consent forms</li></ul>
+          <p class="muted">That’s exactly what this house shows. Follow me.</p>` },
       ],
     },
     {
-      id: 'lebanon', en: 'Lebanon', ar: 'لبنان', theme: 'house',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1380, h: 420, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">لبنان</span>
-          <h3>Lebanon in four lines</h3>
+      id: 'lebanon', en: 'Lebanon', ar: 'لبنان',
+      decor: [
+        { wall: 'N', at: 750, y: -330, w: 470, h: 640, html: ART.W.window },
+        { wall: 'S', at: 750, y: -360, w: 700, h: 440, html: ART.W.ship },
+      ],
+      props: [
+        { u: 300, v: 330, w: 300, h: 420, art: ART.S.cedarPot },
+        { u: 1250, v: 1250, w: 200, h: 300, art: ART.S.plant },
+        { u: 750, v: 750, w: 120, h: 260, y: -H + 130, art: ART.S.lantern },
+      ],
+      pois: [
+        { look: ['P', 0], title: 'The cedar', ar: 'الأرزة', html: `
+          <p>The green cedar tree stands in the middle of the Lebanese flag. Cedars grow high on Mount Lebanon, and some are thousands of years old.</p>
           <div class="four">
-            <div><strong>Beirut</strong><span>our capital, a few minutes from Kfarchima</span></div>
-            <div><strong>Cedar</strong><span>the tree at the centre of our flag</span></div>
+            <div><strong>Beirut</strong><span>our capital</span></div>
+            <div><strong>Cedar</strong><span>our national symbol</span></div>
             <div><strong>Arabic</strong><span>with French and English spoken widely</span></div>
-            <div><strong>Byblos</strong><span>one of the oldest cities in the world</span></div>
+            <div><strong>10,452 km²</strong><span>a small country</span></div>
           </div>` },
-        { wall: 'S', u: 750, y: -350, w: 1300, h: 470, cls: 'painted', html: `
-          <div class="cedar-art">${cedarSVG}
-            <div><h2>Sea and mountains</h2>
-            <p style="margin-top:18px;color:#2E3A36">Lebanon is small, about 10,000 km². You can swim in the Mediterranean in the morning and see snow on Mount Lebanon the same afternoon.</p></div>
-          </div>` },
+        { look: ['N', 750, -330], title: 'Sea and mountains', ar: 'بحر وجبل', html: `
+          <p>Lebanon sits on the eastern shore of the Mediterranean. Behind the coast, Mount Lebanon rises steeply.</p>
+          <p>On a winter day you can swim in the sea in the morning and see snow on the mountains in the afternoon.</p>` },
+        { look: ['S', 750, -360], title: 'Byblos and the alphabet', ar: 'جبيل', html: `
+          <p>Byblos, north of Beirut, is one of the oldest cities in the world that people have lived in without a break.</p>
+          <p>The Phoenicians who sailed from here used an alphabet that later shaped the Greek and Latin alphabets, the letters you are reading now.</p>` },
       ],
     },
     {
-      id: 'kfarchima', en: 'Kfarchima', ar: 'كفرشيما', theme: 'house',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1400, h: 560, cls: 'screen', map: true, html: `
-          <iframe title="Map of Kfarchima, Lebanon" style="height:430px" src="about:blank" data-src="https://www.openstreetmap.org/export/embed.html?bbox=35.505%2C33.800%2C35.560%2C33.832&amp;layer=mapnik&amp;marker=33.8153%2C35.5333"></iframe>
-          <div class="cap"><span>Kfarchima, 33°48′55″N 35°32′0″E</span><span><a href="https://www.openstreetmap.org/?mlat=33.8153&amp;mlon=35.5333#map=15/33.8153/35.5333" target="_blank" rel="noopener">OpenStreetMap</a> &nbsp; <a href="https://www.google.com/maps/search/?api=1&amp;query=Kfarchima%2C%20Lebanon" target="_blank" rel="noopener">Google Maps</a></span></div>` },
-        { wall: 'S', u: 750, y: -350, w: 1380, h: 500, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">جغرافيا</span>
-          <h3>Where we live</h3>
+      id: 'kfarchima', en: 'Kfarchima', ar: 'كفرشيما',
+      decor: [
+        { wall: 'N', at: 750, y: -360, w: 700, h: 520, html: ART.W.map, txt: true },
+        { wall: 'S', at: 750, y: -330, w: 470, h: 640, html: ART.W.window },
+      ],
+      props: [
+        { u: 750, v: 750, w: 120, h: 260, y: -H + 130, art: ART.S.lantern },
+        { u: 180, v: 1300, w: 200, h: 300, art: ART.S.plant },
+        { u: 1320, v: 1300, w: 200, h: 300, art: ART.S.plant },
+      ],
+      pois: [
+        { look: ['N', 750, -360], title: 'Where we live', ar: 'وين ساكنين', html: `
           <dl class="facts">
             <dt>Location</dt><dd>Baabda District, Mount Lebanon, southeast of Beirut and part of Greater Beirut</dd>
             <dt>Size</dt><dd>About 5 km², home to around 70,000 people</dd>
-            <dt>Landscape</dt><dd>Hills overlooking the Mediterranean, with a mild climate</dd>
-            <dt>Neighbours</dt><dd>Hadath, Choueifat, Baabda, and Bsous with its Silk Museum</dd>
-          </dl>` },
+            <dt>Name</dt><dd>Also written Kfarshima, <span lang="ar">كفرشيما</span></dd>
+          </dl>
+          <iframe class="map" title="Map of Kfarchima, Lebanon" loading="lazy" src="https://www.openstreetmap.org/export/embed.html?bbox=35.505%2C33.800%2C35.560%2C33.832&amp;layer=mapnik&amp;marker=33.8153%2C35.5333"></iframe>
+          <p class="muted"><a href="https://www.google.com/maps/search/?api=1&amp;query=Kfarchima%2C%20Lebanon" target="_blank" rel="noopener">Open in Google Maps</a></p>` },
+        { look: ['S', 750, -330], title: 'The view from our hills', ar: 'المنظر', html: `
+          <p>Kfarchima sits on the first hills above Beirut. From the rooftops you can see the Mediterranean, and the climate is mild most of the year.</p>
+          <p>Our neighbours are Hadath, Choueifat, Baabda, and Bsous, which has a museum about Lebanon’s old silk industry.</p>` },
       ],
     },
     {
-      id: 'history', en: 'History', ar: 'تاريخ', theme: 'house',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1380, h: 500, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">تاريخنا</span>
-          <h3>A town with a long memory</h3>
-          <dl class="facts">
-            <dt>Long before us</dt><dd>Many civilizations passed through these hills, and each left something behind.</dd>
-            <dt>Thinkers</dt><dd>Saleem Takla, born here, co-founded Egypt’s Al-Ahram newspaper. The philosopher Shibli Shumayyil also came from Kfarchima.</dd>
-            <dt>Living together</dt><dd>Christian and Muslim families live side by side. The town has seven churches from different traditions.</dd>
-          </dl>` },
-        { wall: 'S', u: 750, y: -350, w: 1300, h: 440, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">صُنع هنا</span>
-          <h3>Made in Kfarchima</h3>
-          <p style="margin-top:18px">Kfarchima is a working town. Its factories make ceramics, paper and cardboard, dairy, sweets, marble and soap.</p>
-          <p class="muted">Many of these products end up in homes all over Lebanon.</p>` },
+      id: 'history', en: 'History', ar: 'تاريخ',
+      decor: [
+        { wall: 'N', at: 430, y: -370, w: 360, h: 440, html: ART.W.sepia('Old Kfarchima'), txt: true },
+        { wall: 'N', at: 1070, y: -370, w: 360, h: 440, html: ART.W.sepia('Houses on the hill'), txt: true },
+      ],
+      props: [
+        { u: 230, v: 230, w: 360, h: 520, art: ART.S.bookshelf },
+        { u: 1120, v: 1230, w: 460, h: 330, art: ART.S.crafts },
+        { u: 750, v: 750, w: 120, h: 260, y: -H + 130, art: ART.S.lantern },
+      ],
+      pois: [
+        { look: ['N', 750, -370], title: 'A town with a long memory', ar: 'ذاكرة طويلة', html: `
+          <p>Many civilizations passed through these hills, and each left something behind. Today most of the old traces sit under modern buildings.</p>
+          <p>Christian and Muslim families live side by side in Kfarchima, and the town has seven churches from different traditions.</p>` },
+        { look: ['P', 0], title: 'Writers and thinkers', ar: 'كتّاب ومفكّرون', html: `
+          <p><b>Saleem Takla</b>, born in Kfarchima, co-founded <i>Al-Ahram</i> in Egypt, one of the best-known newspapers in the Arab world.</p>
+          <p><b>Shibli Shumayyil</b>, a doctor and philosopher, also came from here, and so did the poet <b>Ilyas Farhat</b>.</p>` },
+        { look: ['P', 1], title: 'Made in Kfarchima', ar: 'صُنع هنا', html: `
+          <p>Kfarchima is a working town. Its factories make ceramics, paper and cardboard, dairy products, sweets, marble and soap.</p>
+          <p class="muted">Many of these end up in homes all over Lebanon.</p>` },
       ],
     },
     {
-      id: 'music', en: 'Music', ar: 'موسيقى', theme: 'music',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1380, h: 520, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">بلدة تغنّي</span>
-          <h3>A town that sings</h3>
+      id: 'music', en: 'Music', ar: 'موسيقى',
+      decor: [
+        { wall: 'N', at: 750, y: -420, w: 900, h: 300, html: ART.W.records },
+      ],
+      props: [
+        { u: 1280, v: 1220, w: 320, h: 360, art: ART.S.radio },
+        { u: 380, v: 330, w: 300, h: 460, art: ART.S.oud },
+        { u: 1080, v: 330, w: 220, h: 300, art: ART.S.drum },
+      ],
+      pois: [
+        { look: ['P', 0], title: 'A town that sings', ar: 'بلدة تغنّي', html: `
+          <p>Ask anyone in Lebanon about Kfarchima and they will name a singer. All of these artists come from here:</p>
           <ul class="names">
-            <li><b>Philemon Wehbe</b><span>Composer who wrote songs for Fairouz</span></li>
-            <li><b>Majida El Roumi</b><span>One of the best-known voices in the Arab world</span></li>
-            <li><b>Melhem Barakat</b><span>Singer and stage actor who toured four continents</span></li>
-            <li><b>Issam Rajji</b><span>Singer and composer who worked with the Rahbani brothers</span></li>
-            <li><b>Marie Sleiman</b><span>Singer, first in Mount Lebanon on a 1980 talent show</span></li>
+            <li><b>Philemon Wehbe</b><span>composer who wrote songs for Fairouz</span></li>
+            <li><b>Majida El Roumi</b><span>one of the best-known voices in the Arab world</span></li>
+            <li><b>Melhem Barakat</b><span>singer and stage actor</span></li>
+            <li><b>Issam Rajji</b><span>worked with the Rahbani brothers</span></li>
+            <li><b>Marie Sleiman</b><span>singer</span></li>
           </ul>` },
-        { wall: 'S', u: 750, y: -340, w: 1300, h: 520, cls: 'plaque', html: `
-          <h3>Play maqam Hijaz</h3>
-          <p class="muted" style="margin-top:8px">Arabic music uses scales called maqamat. Hijaz is one of the most recognisable. Press play, or pluck the strings yourself.</p>
-          <div class="oud">
-            <div class="strings" data-strings>${'<span></span>'.repeat(8)}</div>
-            <div style="display:flex;flex-direction:column;justify-content:center;gap:16px">
-              <button type="button" class="act red" data-play>Play a phrase</button>
-            </div>
-          </div>
-          <p class="notes" data-notes lang="ar"></p>` },
+        { look: ['P', 1], title: 'Play the oud', ar: 'العود', html: `
+          <p>The oud is the king of Arabic instruments. Arabic music uses scales called <b>maqamat</b>. Here is <b>maqam Hijaz</b>: tap a string or play a phrase.</p>
+          <div class="oud"><div class="strings" data-strings>${'<span></span>'.repeat(8)}</div><button type="button" class="act red" data-play>Play a phrase</button></div>
+          <p class="notes" data-notes></p>` },
+        { look: ['P', 2], title: 'The derbakeh', ar: 'الدربكة', html: `
+          <p>The derbakeh is a goblet-shaped drum. The deep sound in the middle is called <b>dum</b>, the sharp sound at the edge is <b>tek</b>.</p>
+          <p>Try the most common Lebanese rhythm, <b>maqsoum</b>: dum tek – tek dum – tek –.</p>
+          <p class="drumrow"><button type="button" class="act" data-dum>Dum</button> <button type="button" class="act" data-tek>Tek</button> <button type="button" class="act red" data-rhythm>Play maqsoum</button></p>` },
       ],
     },
     {
-      id: 'kitchen', en: 'Kitchen', ar: 'المطبخ', theme: 'kitchen',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1400, h: 500, cls: 'painted', html: `
-          <h2>On our table</h2>
+      id: 'kitchen', en: 'Kitchen', ar: 'المطبخ',
+      decor: [
+        { wall: 'N', at: 750, y: -430, w: 1100, h: 300, html: ART.W.jars, txt: true },
+      ],
+      props: [
+        { u: 750, v: 700, w: 560, h: 300, art: ART.S.mezze },
+        { u: 260, v: 1250, w: 260, h: 260, art: ART.S.rakweh },
+        { u: 1300, v: 1250, w: 200, h: 300, art: ART.S.plant },
+        { u: 750, v: 700, w: 120, h: 260, y: -H + 130, art: ART.S.lantern },
+      ],
+      pois: [
+        { look: ['P', 0], title: 'Mezze: many small plates', ar: 'مازة', html: `
+          <p>A Lebanese meal is shared. The table fills with small dishes and everyone takes a little of each. Tap a plate to taste it.</p>
           <div class="plates">
-            <button type="button" class="plate" data-plate><div class="in"><div class="fr"><span class="ar" lang="ar">منقوشة</span><span><b>Manakish</b><br><small>Tap to taste</small></span></div><div class="bk"><b>Manakish</b>Flatbread with za’atar and olive oil. Breakfast for most of Lebanon.</div></div></button>
-            <button type="button" class="plate" data-plate><div class="in"><div class="fr"><span class="ar" lang="ar">تبولة</span><span><b>Tabbouleh</b><br><small>Tap to taste</small></span></div><div class="bk"><b>Tabbouleh</b>Parsley, tomato, bulgur and a lot of lemon.</div></div></button>
-            <button type="button" class="plate" data-plate><div class="in"><div class="fr"><span class="ar" lang="ar">حمص</span><span><b>Hummus</b><br><small>Tap to taste</small></span></div><div class="bk"><b>Hummus</b>Chickpeas and tahini, shared with bread at almost every meal.</div></div></button>
-            <button type="button" class="plate" data-plate><div class="in"><div class="fr"><span class="ar" lang="ar">كنافة</span><span><b>Knefeh</b><br><small>Tap to taste</small></span></div><div class="bk"><b>Knefeh</b>Warm sweet cheese pastry with syrup, often in a sesame bun.</div></div></button>
+            <button type="button" class="plate" data-plate><span class="fr"><span lang="ar">منقوشة</span><b>Manakish</b></span><span class="bk">Flatbread with za’atar and olive oil. Breakfast for most of Lebanon.</span></button>
+            <button type="button" class="plate" data-plate><span class="fr"><span lang="ar">تبولة</span><b>Tabbouleh</b></span><span class="bk">Parsley, tomato, bulgur and a lot of lemon.</span></button>
+            <button type="button" class="plate" data-plate><span class="fr"><span lang="ar">حمص</span><b>Hummus</b></span><span class="bk">Chickpeas and tahini, shared with bread at almost every meal.</span></button>
+            <button type="button" class="plate" data-plate><span class="fr"><span lang="ar">كنافة</span><b>Knefeh</b></span><span class="bk">Warm sweet cheese pastry with syrup, often in a sesame bun.</span></button>
           </div>` },
-        { wall: 'S', u: 750, y: -350, w: 1200, h: 420, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">مازة</span>
-          <h3>Mezze: many small plates</h3>
-          <p style="margin-top:16px">A Lebanese meal is shared. The table fills with small dishes and everyone takes a little of each.</p>
-          <p class="muted">Question for our partners: what is a typical breakfast in Ukraine, Bulgaria and Turkey?</p>` },
+        { look: ['N', 750, -430], title: 'The spice shelf', ar: 'رفّ البهارات', html: `
+          <p>Every Lebanese kitchen has jars like these:</p>
+          <dl class="facts">
+            <dt lang="ar">زعتر</dt><dd><b>Za’atar</b>: wild thyme with sesame and sumac, for manakish</dd>
+            <dt lang="ar">سماق</dt><dd><b>Sumac</b>: a sour red spice sprinkled on salads</dd>
+            <dt lang="ar">دبس</dt><dd><b>Dibs</b>: thick grape or carob molasses</dd>
+            <dt lang="ar">برغل</dt><dd><b>Bulgur</b>: cracked wheat, for tabbouleh and kibbeh</dd>
+          </dl>` },
+        { look: ['P', 1], title: 'A cup of welcome', ar: 'قهوة', html: `
+          <p>Lebanese coffee is boiled in a small pot called a <b>rakweh</b>, often with cardamom, and served in tiny cups.</p>
+          <p>Offering coffee to a guest is how Lebanese people say welcome.</p>
+          <p class="muted">Question for our partners: what do you offer a guest in Ukraine, Bulgaria and Turkey?</p>` },
       ],
     },
     {
-      id: 'school', en: 'Our school', ar: 'مدرستنا', theme: 'school',
-      panels: [
-        { wall: 'N', u: 750, y: -350, w: 1400, h: 540, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">مدرستنا</span>
-          <h3>Collège Notre Dame des Sœurs Antonines – Kfarchima</h3>
+      id: 'school', en: 'Our school', ar: 'مدرستنا',
+      decor: [
+        { wall: 'N', at: 750, y: -390, w: 1000, h: 420, html: ART.W.chalkboard, txt: true },
+        { wall: 'S', at: 750, y: -370, w: 1200, h: 380, html: ART.W.photoFrames, txt: true },
+      ],
+      props: [
+        { u: 480, v: 650, w: 420, h: 330, art: ART.S.desk },
+        { u: 1020, v: 650, w: 420, h: 330, art: ART.S.desk },
+        { u: 1300, v: 1220, w: 260, h: 300, art: ART.S.schoolbag },
+      ],
+      pois: [
+        { look: ['N', 750, -390], title: 'Collège Notre Dame des Sœurs Antonines', ar: 'مدرستنا', html: `
+          <p>Our school in Kfarchima, also called Antonines Sisters High School.</p>
           <dl class="facts">
-            <dt>Founded by</dt><dd>The Congregation of the Antonine Sisters</dd>
+            <dt>Founded by</dt><dd>The Congregation of the Antonine Sisters, a Lebanese order that runs schools across the country</dd>
             <dt>Levels</dt><dd>Preschool to secondary</dd>
             <dt>Founded in</dt><dd>${T('[year]')}</dd>
             <dt>Students</dt><dd>About ${T('[number]')}</dd>
             <dt>Languages</dt><dd>${T('[Arabic, French, English]')}</dd>
           </dl>` },
-        { wall: 'S', u: 750, y: -340, w: 1400, h: 520, cls: 'painted', html: `
-          <h2>Inside the school</h2>
-          <div class="frames">
-            <div>The school building ${T('[photo]')}</div>
-            <div>A classroom ${T('[photo]')}</div>
-            <div>The courtyard ${T('[photo]')}</div>
-          </div>
-          <p class="muted" style="margin-top:14px;font-size:24px">Photos show spaces and hands at work, never students’ faces.</p>` },
-        { wall: 'E', u: 250, y: -350, w: 420, h: 430, cls: 'plaque', small: true, html: `
-          <h3 style="font-size:32px">What we value</h3><p style="margin-top:10px;font-size:25px">Moral and spiritual growth alongside academic learning.</p>` },
-        { wall: 'E', u: 1250, y: -350, w: 420, h: 430, cls: 'plaque', small: true, html: `
-          <h3 style="font-size:32px">Beyond class</h3><p style="margin-top:10px;font-size:25px">Clubs and field trips. In 2023, 73 students from Grades 9 and 12 visited a national institution.</p>` },
+        { look: ['P', 0], title: 'What we learn here', ar: 'قيمنا', html: `
+          <p>The school puts moral and spiritual growth alongside academic learning.</p>
+          <p>There are clubs, activities and field trips. In 2023, 73 students from Grades 9 and 12 visited a national institution to learn how it supports Lebanon’s economy.</p>
+          <p class="muted">A school app sends families news, timetables, homework and announcements.</p>` },
+        { look: ['S', 750, -370], title: 'Inside the school', ar: 'جولة', html: `
+          <p>Photos of the building, a classroom and the courtyard go here.</p>
+          <p>${T('[Add the photos]')}</p>
+          <p class="muted">All photos show spaces and hands at work, never students’ faces.</p>` },
       ],
     },
     {
-      id: 'teacher', en: 'Teacher & consent', ar: 'معلّمتنا', theme: 'study',
-      panels: [
-        { wall: 'N', u: 750, y: -345, w: 1200, h: 560, cls: 'letter', html: `
-          <p style="font-family:var(--kufi);font-size:44px;color:var(--cedar)">Dear partners,</p>
-          <p style="margin-top:20px"><b>Who I am.</b> ${T('[Years of teaching, subjects and classes, earlier eTwinning projects]')}</p>
-          <p><b>What I enjoy.</b> ${T('[Interests outside the classroom]')}</p>
-          <p><b>What I hope WELNOVA brings.</b> ${T('[What she hopes students will gain]')}</p>
-          <p style="margin-top:30px;font-family:var(--kufi);font-size:40px;color:var(--cedar)">Mary Safadi</p>
-          <p class="muted" style="margin-top:0;font-size:24px">English Department</p>` },
-        { wall: 'S', u: 750, y: -350, w: 1400, h: 500, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">موافقة الأهل</span>
-          <h3>Parental consent, step by step</h3>
+      id: 'teacher', en: 'Teacher & consent', ar: 'معلّمتنا',
+      decor: [
+        { wall: 'N', at: 750, y: -330, w: 470, h: 640, html: ART.W.window },
+      ],
+      props: [
+        { u: 750, v: 560, w: 520, h: 360, art: ART.S.teacherDesk },
+        { u: 1250, v: 1230, w: 300, h: 300, art: ART.S.forms },
+        { u: 220, v: 230, w: 360, h: 520, art: ART.S.bookshelf },
+      ],
+      pois: [
+        { look: ['P', 0], title: 'A letter from our teacher', ar: 'رسالة', html: `
+          <div class="letter">
+            <p class="greet">Dear partners,</p>
+            <p><b>Who I am.</b> ${T('[Years of teaching, subjects and classes, earlier eTwinning projects]')}</p>
+            <p><b>What I enjoy.</b> ${T('[Interests outside the classroom]')}</p>
+            <p><b>What I hope WELNOVA brings.</b> ${T('[What she hopes students will gain]')}</p>
+            <p class="sig">Mary Safadi<small>English Department</small></p>
+          </div>` },
+        { look: ['P', 1], title: 'Parental consent', ar: 'موافقة الأهل', html: `
+          <p>Every student joins with written permission from their parents, on a form written in English.</p>
           <ol class="process">
             <li><b>Sent home</b>Parents receive the form with the project’s aims.</li>
             <li><b>Signed</b>They approve taking part and the use of work on TwinSpace.</li>
@@ -190,43 +242,67 @@
       ],
     },
     {
-      id: 'terrace', en: 'Terrace', ar: 'السطح', theme: 'terrace',
-      panels: [
-        { wall: 'N', u: 750, y: -420, w: 1400, h: 380, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">فريقنا</span>
-          <h3>Our ten</h3>
-          <div class="roster">${Array.from({ length: 10 }, () => `<div><b>${T('[Name]')}</b><span>${T('[one line]')}</span></div>`).join('')}</div>` },
-        { wall: 'S', u: 750, y: -400, w: 1300, h: 420, cls: 'plaque', html: `
-          <span class="tag-ar" lang="ar">مدرسة المستقبل</span>
-          <h3>Our future school, in your room</h3>
-          <p style="margin-top:14px">Four international teams, four floors, one Eco-Future School. Open it in 3D, or place it on your table with AR.</p>
-          <p style="margin-top:26px"><button type="button" class="act red" data-ar>Open the 3D school</button></p>` },
-        { wall: 'E', u: 750, y: -420, w: 1400, h: 330, cls: 'painted', html: `
-          <p class="big-ar" lang="ar" style="font-size:110px">أهلا وسهلا</p>
-          <div class="scripts"><span lang="ar">لبنان</span><span lang="uk">Україна</span><span lang="bg">България</span><span lang="tr">Türkiye</span></div>` },
+      id: 'terrace', en: 'Terrace', ar: 'السطح', terrace: true,
+      decor: [
+        { wall: 'N', at: 750, y: -500, w: 1400, h: 200, html: ART.S.bunting },
+      ],
+      props: [
+        { u: 750, v: 480, w: 320, h: 420, art: ART.S.schoolModel },
+        { u: 420, v: 1180, w: 520, h: 420, art: ART.S.students },
+        { u: 170, v: 170, w: 200, h: 300, art: ART.S.plant },
+        { u: 1330, v: 170, w: 200, h: 300, art: ART.S.plant },
+        { u: 1330, v: 1330, w: 200, h: 300, art: ART.S.plant },
+      ],
+      pois: [
+        { look: ['P', 1], title: 'Our ten', ar: 'فريقنا', html: `
+          <p>Ten students from our school join the four international teams, two or three in each.</p>
+          <div class="roster">${Array.from({ length: 10 }, () => `<span>${T('[Name]')}</span>`).join('')}</div>` },
+        { look: ['P', 0], title: 'Our future school', ar: 'مدرسة المستقبل', html: `
+          <p>Four international teams, four floors, one Eco-Future School:</p>
+          <ol class="floors">
+            <li class="c1">Inclusion &amp; Accessibility</li><li class="c2">Anti-Bullying &amp; Well-being</li>
+            <li class="c3">Digital Learning &amp; Innovation</li><li class="c4">Environment &amp; Sustainability</li>
+          </ol>
+          <p>Plus a rooftop garden and a basement that collects rainwater.</p>
+          <p><button type="button" class="act red" data-ar>See it in 3D and AR</button></p>` },
+        { look: ['N', 750, -500], title: 'Ahlan wa sahlan', ar: 'أهلا وسهلا', html: `
+          <p class="big-ar" lang="ar">أهلا وسهلا</p>
+          <p>Welcome, friends from <b>Ukraine, Bulgaria and Turkey</b>. We can’t wait to meet you and design our future school together.</p>
+          <p class="muted">You’ve seen the whole house. Walk around as much as you like, or tap me to hear any room again.</p>` },
       ],
     },
   ];
+  const ROOMS_N = ROOMS.length;
+  const COLS = ROOMS_N * 4 + 1;
+
+  /* ---------- progress: which rooms Anna has finished showing ---------- */
+  const done = (() => {
+    try { const v = JSON.parse(localStorage.getItem('bayt-anna') || '[]'); if (Array.isArray(v)) return v; } catch {}
+    return [];
+  })();
+  const saveDone = () => { try { localStorage.setItem('bayt-anna', JSON.stringify(done)); } catch {} };
+  const unlocked = (i) => i === 0 || !!done[i - 1];
 
   /* ---------- grid ---------- */
   const walkable = (x, z) => {
     const c = Math.floor(x / S), r = Math.floor(z / S);
     if (r < 1 || r > 3 || c < 1 || c >= COLS - 1) return false;
     if (c % 4 !== 0) return true;
-    return r === 2;           // doorway
+    return r === 2 && !!done[c / 4 - 1];        // doorway, open once the room before it is read
   };
   const roomAt = (x) => Math.max(0, Math.min(ROOMS_N - 1, Math.floor((x / S - 1) / 4 + 0.125)));
-  const roomCentre = (i) => ({ x: (4 * i + 2.5) * S, z: 2.5 * S });
+  const x0Of = (i) => (4 * i + 1) * S;
+  const standZ = () => (innerWidth < innerHeight ? 3.6 : 3.1) * S;
 
-  /* ---------- build the world ---------- */
+  /* =====================================================================
+     BUILD THE WORLD
+     ===================================================================== */
   const scene = document.getElementById('scene');
-  const faces = [];   // { el, rooms: [i...] }
-
-  // Memory: Safari keeps a full-resolution bitmap for every 3D surface. Each surface is drawn
-  // small (w / q) and scaled up, so phones with sharp screens store far fewer pixels.
+  const faces = [];       // { el, rooms }
+  const boards = [];      // billboards: { el, x, y, z, q, rooms }
   const DPR = window.devicePixelRatio || 1;
-  const Q_TEX = DPR >= 2 ? 3.5 : 1.5;     // floors, walls, ceilings: textures only
-  const Q_TXT = DPR >= 2 ? 2 : 1;         // panels with text
+  const Q_TEX = DPR >= 2 ? 3.5 : 1.5;   // big surfaces, drawn small and scaled up to save memory
+  const Q_TXT = DPR >= 2 ? 2 : 1;       // surfaces with lettering
 
   function face(cls, w, h, x, y, z, ry, rx, rooms, extra = {}) {
     const q = extra.q || Q_TEX;
@@ -247,7 +323,14 @@
     el.appendChild(inner);
     scene.appendChild(el);
     faces.push({ el, rooms });
-    return inner;
+    return { el, inner, q };
+  }
+
+  function board(cls, w, h, x, y, z, rooms, html) {
+    const f = face(cls, w, h, x, y, z, 0, 0, rooms, { html, q: Q_TXT });
+    const b = { el: f.el, inner: f.inner, x, y, z, q: f.q, rooms };
+    boards.push(b);
+    return b;
   }
 
   const archBG = (() => {
@@ -263,73 +346,80 @@
     return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
   })();
 
+  const wallSpot = (i, wall, at) => {
+    const x0 = x0Of(i), off = 5;
+    if (wall === 'N') return { x: x0 + at, z: S + off, ry: 0 };
+    if (wall === 'S') return { x: x0 + at, z: 4 * S - off, ry: 180 };
+    if (wall === 'W') return { x: x0 + off, z: S + at, ry: 90 };
+    return { x: x0 + 3 * S - off, z: S + at, ry: -90 };
+  };
+
+  const veils = [];
   ROOMS.forEach((room, i) => {
-    const x0 = (4 * i + 1) * S;          // west edge of the interior
-    const cx = x0 + 1.5 * S;
-    const terrace = room.theme === 'terrace';
-    const wallCls = terrace ? 'wall view' : 'wall dado';
+    const x0 = x0Of(i), cx = x0 + 1.5 * S;
     const r = [i];
+    const wallCls = room.terrace ? 'wall view' : 'wall dado';
 
     face('floor', 3 * S, 3 * S, cx, 0, 2.5 * S, 0, 90, r);
-    face(terrace ? 'sky' : 'ceiling', 3 * S, 3 * S, cx, -H, 2.5 * S, 0, -90, r);
-    face(wallCls + ' ns', 3 * S, H, cx, -H / 2, S, 0, 0, r);           // north
-    face(wallCls + ' ns', 3 * S, H, cx, -H / 2, 4 * S, 180, 0, r);     // south
-
-    // west and east walls: solid at the ends of the house, arched elsewhere
+    face(room.terrace ? 'sky' : 'ceiling', 3 * S, 3 * S, cx, -H, 2.5 * S, 0, -90, r);
+    face(wallCls, 3 * S, H, cx, -H / 2, S, 0, 0, r);
+    face(wallCls, 3 * S, H, cx, -H / 2, 4 * S, 180, 0, r);
     for (const side of ['W', 'E']) {
       const x = side === 'W' ? x0 : x0 + 3 * S;
       const ry = side === 'W' ? 90 : -90;
       const solid = (side === 'W' && i === 0) || (side === 'E' && i === ROOMS_N - 1);
-      if (solid) {
-        face(wallCls, 3 * S, H, x, -H / 2, 2.5 * S, ry, 0, r);
-      } else {
+      if (solid) face(wallCls, 3 * S, H, x, -H / 2, 2.5 * S, ry, 0, r);
+      else {
         face(wallCls, S, H, x, -H / 2, 1.5 * S, ry, 0, r);
         face(wallCls, S, H, x, -H / 2, 3.5 * S, ry, 0, r);
         face('arch', S, H, x, -H / 2, 2.5 * S, ry, 0, r, { bg: archBG });
       }
     }
-
-    // doorway tunnel to the next room
     if (i < ROOMS_N - 1) {
-      const tx = (4 * i + 4.5) * S;
-      const both = [i, i + 1];
+      const tx = (4 * i + 4.5) * S, both = [i, i + 1];
       face('floor', S, S, tx, 0, 2.5 * S, 0, 90, both);
       face('ceiling', S, S, tx, -H, 2.5 * S, 0, -90, both);
       face('wall', S, H, tx, -H / 2, 2 * S, 0, 0, both);
       face('wall', S, H, tx, -H / 2, 3 * S, 180, 0, both);
+      const v = face('veil', 320, 480, (4 * i + 4) * S - 6, -240, 2.5 * S, -90, 0, [i], { q: 2 });
+      v.inner.innerHTML = '<span>Read everything in this room to open the arch</span>';
+      veils[i] = v.inner;
     }
 
-    // exhibits
-    room.panels.forEach((p) => {
-      let x, z, ry;
-      const off = 4;
-      if (p.wall === 'N') { x = x0 + p.u; z = S + off; ry = 0; }
-      if (p.wall === 'S') { x = x0 + 3 * S - p.u; z = 4 * S - off; ry = 180; }
-      if (p.wall === 'W') { x = x0 + off; z = 4 * S - p.u; ry = 90; }
-      if (p.wall === 'E') { x = x0 + 3 * S - off; z = S + p.u; ry = -90; }
-      face('panel ' + p.cls, p.w, p.h, x, p.y, z, ry, 0, r, { html: p.html, q: Q_TXT });
+    room.decor.forEach((d) => {
+      const p = wallSpot(i, d.wall, d.at);
+      face('decor', d.w, d.h, p.x, d.y, p.z, p.ry, 0, r, { html: d.html, q: d.txt ? Q_TXT : Q_TEX / 1.5 });
+    });
+    room.props.forEach((p) => {
+      p.x = x0 + p.u; p.z = S + p.v; p.yy = p.y != null ? p.y : -p.h / 2;
+      p.board = board('prop', p.w, p.h, p.x, p.yy, p.z, r, p.art);
     });
   });
 
-  /* ---------- camera ---------- */
-  const view = document.getElementById('viewport');
-  const STAND = () => (innerWidth < innerHeight ? 3.6 : 3.1) * S;   // where you stand when entering a room
-  const cam = { x: roomCentre(0).x, z: STAND(), yaw: 0, pitch: 0.05 };
-  let persp = 800;
+  function refreshVeils() {
+    veils.forEach((inner, i) => { if (inner) inner.classList.toggle('open', !!done[i]); });
+  }
+  refreshVeils();
 
+  /* ---------- Anna ---------- */
+  const anna = board('ghost', 240, 300, 0, -420, 0, [], ART.ghost(true));
+  anna.inner.setAttribute('title', 'Anna');
+  const annaPos = { x: x0Of(0) + 1050, y: -430, z: S + 650 };
+  const annaGoal = { ...annaPos };
+
+  /* =====================================================================
+     CAMERA, RENDER, CULLING
+     ===================================================================== */
+  const view = document.getElementById('viewport');
+  const cam = { x: x0Of(0) + 750, z: standZ(), yaw: 0, pitch: 0.05 };
+  let persp = 800;
   function resize() {
     const h = view.clientHeight, w = view.clientWidth;
-    const fov = (w < h ? 104 : 70) * Math.PI / 180;     // wider on portrait phones so wall panels fit
-    persp = Math.round((h / 2) / Math.tan(fov / 2));
+    persp = Math.round((h / 2) / Math.tan((w < h ? 104 : 70) * Math.PI / 360));
     view.style.perspective = persp + 'px';
   }
   resize();
   addEventListener('resize', resize);
-
-  function render() {
-    scene.style.transform =
-      `translateZ(${persp}px) rotateX(${cam.pitch}rad) rotateY(${cam.yaw}rad) translate3d(${-cam.x}px,${EYE}px,${-cam.z}px)`;
-  }
 
   let currentRoom = -1;
   function updateRoom() {
@@ -337,42 +427,50 @@
     if (ri === currentRoom) return;
     currentRoom = ri;
     for (const f of faces) {
+      if (f.el === anna.el) continue;
       const d = Math.min(...f.rooms.map((k) => Math.abs(k - ri)));
       f.el.classList.toggle('hidden', d > 1);
     }
-    // the live map only runs while you are in its room
-    document.querySelectorAll('#scene iframe[data-src]').forEach((fr) => {
-      const want = ROOMS[ri].id === 'kfarchima' ? fr.dataset.src : 'about:blank';
-      if (fr.getAttribute('src') !== want) fr.setAttribute('src', want);
-    });
     const room = ROOMS[ri];
     document.getElementById('room-label').innerHTML = `${ri + 1}. ${room.en} &nbsp;<b lang="ar" dir="rtl">${room.ar}</b>`;
     if (started) showToast(room);
+    if (!tour && done[ri]) idleAnna();
   }
 
-  /* ---------- toast ---------- */
-  const toast = document.getElementById('toast');
-  let toastTimer;
-  function showToast(room) {
-    toast.innerHTML = `<span class="ar" lang="ar">${room.ar}</span><span class="en">${room.en}</span>`;
-    toast.classList.add('on');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('on'), 1800);
+  function render(t) {
+    scene.style.transform =
+      `translateZ(${persp}px) rotateX(${cam.pitch}rad) rotateY(${cam.yaw}rad) translate3d(${-cam.x}px,${EYE}px,${-cam.z}px)`;
+    for (const k of ['x', 'y', 'z']) annaPos[k] += (annaGoal[k] - annaPos[k]) * 0.06;   // Anna drifts towards her goal
+    anna.x = annaPos.x; anna.z = annaPos.z;
+    anna.y = annaPos.y + (REDUCED ? 0 : Math.sin(t / 420) * 14);
+    const turn = `rotateY(${-cam.yaw}rad)`;
+    for (const b of boards) {
+      if (b.el.classList.contains('hidden')) continue;
+      b.el.style.transform = `translate3d(${b.x}px,${b.y}px,${b.z}px) ${turn} scale(${b.q})`;
+    }
   }
 
-  /* ---------- movement ---------- */
+  /* =====================================================================
+     MOVEMENT
+     ===================================================================== */
   const keys = new Set();
-  const move = { f: 0, s: 0 };       // from the touch stick
+  const move = { f: 0, s: 0 };
   let tween = null;
+  let bumpCooldown = 0;
 
   function tryMove(dx, dz) {
     const ok = (x, z) => walkable(x - RADIUS, z - RADIUS) && walkable(x + RADIUS, z - RADIUS) &&
       walkable(x - RADIUS, z + RADIUS) && walkable(x + RADIUS, z + RADIUS);
     if (ok(cam.x + dx, cam.z)) cam.x += dx;
-    else if (Math.abs(dx) > Math.abs(dz) && Math.abs(cam.z - 2.5 * S) < 0.75 * S) {
-      // heading for an arch but slightly off: slide towards the doorway's centre line
-      const pull = Math.sign(2.5 * S - cam.z) * Math.min(Math.abs(2.5 * S - cam.z), Math.abs(dx) * 1.2);
-      if (ok(cam.x, cam.z + pull)) cam.z += pull;
+    else {
+      const ri = roomAt(cam.x);
+      const atArch = Math.abs(cam.z - 2.5 * S) < 0.75 * S && dx > 0 && cam.x > x0Of(ri) + 2.4 * S && ri < ROOMS_N - 1;
+      if (atArch && !done[ri]) {
+        if (bumpCooldown <= 0) { bumpCooldown = 3; annaSays('Wait! Let me show you this room first.'); }
+      } else if (Math.abs(dx) > Math.abs(dz) && Math.abs(cam.z - 2.5 * S) < 0.75 * S) {
+        const pull = Math.sign(2.5 * S - cam.z) * Math.min(Math.abs(2.5 * S - cam.z), Math.abs(dx) * 1.2);
+        if (ok(cam.x, cam.z + pull)) cam.z += pull;
+      }
     }
     if (ok(cam.x, cam.z + dz)) cam.z += dz;
   }
@@ -390,44 +488,220 @@
     if (len > 0) {
       const speed = (keys.has('shift') ? 1250 : 650) * Math.min(1, len) / len;
       const sin = Math.sin(cam.yaw), cos = Math.cos(cam.yaw);
-      const dx = (f * sin + s * cos) * speed * dt;
-      const dz = (-f * cos + s * sin) * speed * dt;
-      tryMove(dx, dz);
+      tryMove((f * sin + s * cos) * speed * dt, (-f * cos + s * sin) * speed * dt);
       tween = null;
       hideHint();
     }
   }
 
   function goToRoom(i) {
-    const c = roomCentre(i);
-    const target = { x: c.x, z: STAND(), yaw: Math.round(cam.yaw / (2 * Math.PI)) * 2 * Math.PI, pitch: 0.05 };
+    if (!unlocked(i)) return;
+    const target = { x: x0Of(i) + 750, z: standZ(), yaw: Math.round(cam.yaw / (2 * Math.PI)) * 2 * Math.PI, pitch: 0.05 };
     if (REDUCED) { Object.assign(cam, target); return; }
     tween = { from: { ...cam }, to: target, t: 0, dur: Math.min(2.2, 0.6 + Math.abs(i - roomAt(cam.x)) * 0.25) };
+  }
+
+  function lookAt(px, py, pz, then) {
+    const dx = px - cam.x, dz = pz - cam.z;
+    let yaw = Math.atan2(dx, -dz);
+    while (yaw - cam.yaw > Math.PI) yaw -= 2 * Math.PI;
+    while (yaw - cam.yaw < -Math.PI) yaw += 2 * Math.PI;
+    // aim a little low so the thing sits in the upper part of the screen, above Anna's card
+    const pitch = Math.max(-0.6, Math.min(0.5, Math.atan2(-(py + EYE), Math.hypot(dx, dz)) - 0.22));
+    const to = { x: cam.x, z: cam.z, yaw, pitch };
+    if (REDUCED) { Object.assign(cam, to); if (then) then(); return; }
+    tween = { from: { ...cam }, to, t: 0, dur: 0.75, then };
   }
 
   let last = performance.now();
   function frame(now) {
     const dt = Math.min(0.05, (now - last) / 1000);
     last = now;
+    bumpCooldown -= dt;
     if (tween) {
       tween.t += dt / tween.dur;
       const k = tween.t >= 1 ? 1 : 0.5 - Math.cos(Math.PI * tween.t) / 2;
       for (const key of ['x', 'z', 'yaw', 'pitch']) cam[key] = tween.from[key] + (tween.to[key] - tween.from[key]) * k;
-      if (tween.t >= 1) tween = null;
-    } else {
+      if (tween.t >= 1) { const then = tween.then; tween = null; if (then) then(); }
+    } else if (!cardOpen) {
       step(dt);
+      applyGyro();
     }
-    applyGyro();
-    render();
+    render(now);
     updateRoom();
+    checkTourStart();
     drawMap();
     requestAnimationFrame(frame);
   }
 
-  /* ---------- input: keyboard ---------- */
+  /* =====================================================================
+     ANNA'S TOUR
+     ===================================================================== */
+  let tour = null;          // { room, idx, replay }
+  let cardOpen = false;
+
+  function poiPoint(i, poi) {
+    const [kind, a, b] = poi.look;
+    if (kind === 'P') { const p = ROOMS[i].props[a]; return { x: p.x, y: p.yy, z: p.z }; }
+    const s = wallSpot(i, kind, a);
+    return { x: s.x, y: b, z: s.z };
+  }
+
+  function placeAnnaBeside(pt) {
+    const dx = pt.x - cam.x, dz = pt.z - cam.z, d = Math.hypot(dx, dz) || 1;
+    const fx = dx / d, fz = dz / d;           // towards the thing
+    const rx = -fz, rz = fx;                  // to its right, seen from the camera
+    const back = Math.min(380, d * 0.45);
+    const x0 = x0Of(currentRoom);
+    annaGoal.x = Math.max(x0 + 140, Math.min(x0 + 3 * S - 140, pt.x - fx * back - rx * 230));
+    annaGoal.z = Math.max(S + 140, Math.min(4 * S - 140, pt.z - fz * back - rz * 230));
+    annaGoal.y = Math.min(-300, pt.y - 40);
+  }
+
+  function idleAnna() {
+    const x0 = x0Of(currentRoom);
+    annaGoal.x = x0 + 1150; annaGoal.z = S + 520; annaGoal.y = -440;
+  }
+
+  function checkTourStart() {
+    if (!started || tour || cardOpen) return;
+    const i = roomAt(cam.x), x0 = x0Of(i);
+    if (done[i]) return;
+    if (cam.x > x0 + 120 && cam.x < x0 + 3 * S - 120) startTour(i);
+  }
+
+  function startTour(i, replay = false) {
+    tour = { room: i, idx: 0, replay };
+    hideHint();
+    showPoi();
+  }
+
+  function showPoi() {
+    const room = ROOMS[tour.room];
+    const poi = room.pois[tour.idx];
+    const pt = poiPoint(tour.room, poi);
+    keys.clear(); move.f = move.s = 0;
+    cardOpen = true;
+    placeAnnaBeside(pt);
+    lookAt(pt.x, pt.y, pt.z, () => {
+      placeAnnaBeside(pt);
+      setTimeout(() => openCard(room, poi, tour.idx, room.pois.length), REDUCED ? 0 : 450);
+    });
+  }
+
+  function nextPoi() {
+    closeCard();
+    if (!tour) return;
+    tour.idx++;
+    const room = ROOMS[tour.room];
+    if (tour.idx < room.pois.length) { showPoi(); return; }
+    const i = tour.room;
+    const first = !done[i];
+    done[i] = true; saveDone(); refreshVeils();
+    tour = null;
+    idleAnna();
+    renderRoomsMenu();
+    if (i < ROOMS_N - 1) annaSays(first ? 'Yalla! The arch is open. Walk east to the next room.' : 'The arch to the next room is open.');
+    else annaSays('That’s the whole house. Tap me any time to hear a room again.');
+  }
+
+  /* ---------- the card that pops up in front of you ---------- */
+  const card = document.getElementById('card');
+  const cardBody = document.getElementById('card-body');
+  const cardTitle = document.getElementById('card-title');
+  const cardAr = document.getElementById('card-ar');
+  const cardStep = document.getElementById('card-step');
+  const btnNext = document.getElementById('card-next');
+  const btnHear = document.getElementById('card-hear');
+  let readTimer = null;
+
+  function openCard(room, poi, idx, total) {
+    cardTitle.textContent = poi.title;
+    cardAr.textContent = poi.ar || '';
+    cardBody.innerHTML = poi.html;
+    cardStep.textContent = total > 1 ? `${idx + 1} of ${total} in ${room.en}` : room.en;
+    const lastOne = idx + 1 >= total;
+    btnNext.textContent = !lastOne ? 'Next' : (tour && tour.room < ROOMS_N - 1 ? 'Open the arch' : 'Done');
+    card.hidden = false;
+    card.classList.remove('pop'); void card.offsetWidth; card.classList.add('pop');
+
+    // you have to read it: Next waits about as long as it takes to read the card
+    const words = (poi.title + ' ' + cardBody.textContent).split(/\s+/).filter(Boolean).length;
+    const ms = tour && !tour.replay ? Math.max(2500, Math.min(9000, words * 230)) : 500;
+    btnNext.disabled = true;
+    btnNext.style.setProperty('--wait', ms + 'ms');
+    btnNext.classList.remove('filling'); void btnNext.offsetWidth; btnNext.classList.add('filling');
+    clearTimeout(readTimer);
+    readTimer = setTimeout(() => { btnNext.disabled = false; btnNext.focus({ preventScroll: true }); }, ms);
+    if (voiceOn) speak(poi.title + '. ' + cardBody.textContent);
+    cardBody.scrollTop = 0;
+  }
+
+  function closeCard() {
+    card.hidden = true;
+    cardOpen = false;
+    clearTimeout(readTimer);
+    stopSpeaking();
+  }
+
+  btnNext.addEventListener('click', () => { if (!btnNext.disabled) nextPoi(); });
+  btnHear.addEventListener('click', () => speak(cardTitle.textContent + '. ' + cardBody.textContent));
+  addEventListener('keydown', (e) => {
+    if (!cardOpen || card.hidden) return;
+    if ((e.key === 'Enter' || e.key === ' ') && !btnNext.disabled && !e.target.closest('button:not(#card-next), a, iframe')) { e.preventDefault(); nextPoi(); }
+  });
+
+  /* ---------- Anna's voice ---------- */
+  const canSpeak = 'speechSynthesis' in window;
+  let voiceOn = canSpeak;
+  let voice = null;
+  function pickVoice() {
+    const vs = speechSynthesis.getVoices();
+    voice = vs.find((v) => /^en/i.test(v.lang) && /female|samantha|karen|moira|tessa|serena|kate|libby|sonia|zira|aria|jenny/i.test(v.name)) ||
+      vs.find((v) => /^en/i.test(v.lang)) || null;
+  }
+  if (canSpeak) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  function speak(text) {
+    if (!canSpeak) return;
+    speechSynthesis.cancel();
+    const clean = text.replace(/\[[^\]]*\]/g, ' ').replace(/[؀-ۿ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    const u = new SpeechSynthesisUtterance(clean);
+    if (voice) u.voice = voice;
+    u.lang = voice ? voice.lang : 'en-GB';
+    u.rate = 1; u.pitch = 1.25;
+    speechSynthesis.speak(u);
+  }
+  function stopSpeaking() { if (canSpeak) speechSynthesis.cancel(); }
+  const btnVoice = document.getElementById('btn-voice');
+  const setVoiceLabel = () => { btnVoice.textContent = voiceOn ? 'Anna’s voice: on' : 'Anna’s voice: off'; btnVoice.setAttribute('aria-pressed', String(voiceOn)); };
+  if (!canSpeak) { btnVoice.hidden = true; btnHear.hidden = true; }
+  setVoiceLabel();
+  btnVoice.addEventListener('click', () => { voiceOn = !voiceOn; setVoiceLabel(); if (!voiceOn) stopSpeaking(); });
+
+  /* ---------- short lines from Anna ---------- */
+  const toast = document.getElementById('toast');
+  const sayBox = document.getElementById('anna-says');
+  let toastTimer, sayTimer;
+  function showToast(room) {
+    toast.innerHTML = `<span class="ar" lang="ar">${room.ar}</span><span class="en">${room.en}</span>`;
+    toast.classList.add('on');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('on'), 1800);
+  }
+  function annaSays(msg) {
+    sayBox.innerHTML = `<b>Anna</b>${msg}`;
+    sayBox.classList.add('on');
+    clearTimeout(sayTimer);
+    sayTimer = setTimeout(() => sayBox.classList.remove('on'), 3800);
+    if (voiceOn && started && !cardOpen) speak(msg);
+  }
+
+  /* =====================================================================
+     INPUT
+     ===================================================================== */
   const typing = (e) => e.target.closest && e.target.closest('input, textarea, dialog[open]');
   addEventListener('keydown', (e) => {
-    if (typing(e) || !started) return;
+    if (typing(e) || !started || cardOpen) return;
     const k = e.key.toLowerCase();
     if (['w', 'a', 's', 'd', 'q', 'e', 'shift', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) {
       keys.add(k);
@@ -437,18 +711,14 @@
   addEventListener('keyup', (e) => keys.delete(e.key.toLowerCase()));
   addEventListener('blur', () => keys.clear());
 
-  /* ---------- input: pointer (look) and touch stick (walk) ---------- */
   const stick = document.getElementById('stick');
   const knob = document.getElementById('stick-knob');
-  let look = null, walk = null;
-
-  function isTouchDevice() { return matchMedia('(pointer: coarse)').matches; }
+  let look = null, walk = null, lastDrag = 0;
+  const isTouch = () => matchMedia('(pointer: coarse)').matches;
 
   view.addEventListener('pointerdown', (e) => {
-    if (!started) return;
-    if (e.target.closest('button, a, iframe')) return;   // let exhibits be clicked
-    const touch = e.pointerType === 'touch';
-    if (touch && e.clientX < innerWidth * 0.45 && !walk) {
+    if (!started || cardOpen) return;
+    if (e.pointerType === 'touch' && e.clientX < innerWidth * 0.45 && !walk) {
       const r = stick.getBoundingClientRect();
       walk = { id: e.pointerId, cx: r.left + r.width / 2, cy: r.top + r.height / 2 };
       updateStick(e);
@@ -459,38 +729,42 @@
   });
   addEventListener('pointermove', (e) => {
     if (walk && e.pointerId === walk.id) updateStick(e);
-    if (look && e.pointerId === look.id) {
+    if (look && e.pointerId === look.id && !cardOpen) {
       const dx = e.clientX - look.x, dy = e.clientY - look.y;
       look.x = e.clientX; look.y = e.clientY;
       look.moved += Math.abs(dx) + Math.abs(dy);
       const k = e.pointerType === 'touch' ? 0.006 : 0.0045;
       cam.yaw += dx * k;
       cam.pitch = Math.max(-0.75, Math.min(0.75, cam.pitch - dy * k));
-      if (gyro.on) { gyro.yawOffset += dx * k; }
+      if (gyro.on) gyro.yawOffset += dx * k;
       tween = null;
       if (look.moved > 30) hideHint();
     }
   });
   const endPointer = (e) => {
     if (walk && e.pointerId === walk.id) { walk = null; move.f = move.s = 0; knob.style.transform = ''; }
-    if (look && e.pointerId === look.id) { look = null; view.classList.remove('dragging'); }
+    if (look && e.pointerId === look.id) { lastDrag = look.moved; look = null; view.classList.remove('dragging'); }
   };
   addEventListener('pointerup', endPointer);
   addEventListener('pointercancel', endPointer);
-
   function updateStick(e) {
     const max = 46;
     let dx = e.clientX - walk.cx, dy = e.clientY - walk.cy;
     const d = Math.hypot(dx, dy);
     if (d > max) { dx *= max / d; dy *= max / d; }
     knob.style.transform = `translate(${dx}px,${dy}px)`;
-    move.s = dx / max;
-    move.f = -dy / max;
+    if (!cardOpen) { move.s = dx / max; move.f = -dy / max; }
   }
+
+  // tap Anna to hear this room again
+  anna.inner.addEventListener('click', () => {
+    if (lastDrag > 8 || cardOpen || tour) return;
+    startTour(currentRoom, !!done[currentRoom]);
+  });
 
   /* ---------- gyro ---------- */
   const gyro = { on: false, base: null, yawOffset: 0, alpha: null, beta: null };
-  function onOrient(e) { gyro.alpha = e.alpha; gyro.beta = e.beta; }
+  const onOrient = (e) => { gyro.alpha = e.alpha; gyro.beta = e.beta; };
   function applyGyro() {
     if (!gyro.on || gyro.alpha == null) return;
     if (gyro.base == null) { gyro.base = gyro.alpha; gyro.yawOffset = cam.yaw; }
@@ -498,41 +772,35 @@
     if (d > 180) d -= 360;
     if (d < -180) d += 360;
     cam.yaw = gyro.yawOffset - d * Math.PI / 180;
-    const pitch = (gyro.beta - 80) * Math.PI / 180;      // phone held upright = level
-    cam.pitch = Math.max(-0.75, Math.min(0.75, pitch));
+    cam.pitch = Math.max(-0.75, Math.min(0.75, (gyro.beta - 80) * Math.PI / 180));
   }
   const btnGyro = document.getElementById('btn-gyro');
-  if ('DeviceOrientationEvent' in window && isTouchDevice()) btnGyro.hidden = false;
+  if ('DeviceOrientationEvent' in window && isTouch()) btnGyro.hidden = false;
   btnGyro.addEventListener('click', async () => {
-    if (gyro.on) {
-      gyro.on = false; removeEventListener('deviceorientation', onOrient);
-      btnGyro.textContent = 'Look with phone'; return;
-    }
+    if (gyro.on) { gyro.on = false; removeEventListener('deviceorientation', onOrient); btnGyro.textContent = 'Look with phone'; return; }
     try {
       if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-        const res = await DeviceOrientationEvent.requestPermission();
-        if (res !== 'granted') throw new Error('denied');
+        if ((await DeviceOrientationEvent.requestPermission()) !== 'granted') throw new Error('denied');
       }
       gyro.on = true; gyro.base = null;
       addEventListener('deviceorientation', onOrient);
       btnGyro.textContent = 'Stop phone look';
     } catch {
-      flash('Motion access was turned off. Allow it in your browser settings to look around by moving your phone.');
+      annaSays('Motion access is off. Allow it in your browser settings to look around by moving your phone.');
     }
   });
 
   /* ---------- minimap ---------- */
   const map = document.getElementById('minimap');
   const mctx = map.getContext('2d');
-  const MW = map.width, MH = map.height;
-  const mk = MW / (COLS * S);
+  const MW = map.width, MH = map.height, mk = MW / (COLS * S);
   function drawMap() {
     mctx.clearRect(0, 0, MW, MH);
     const top = (MH - 3 * S * mk) / 2 - S * mk;
     ROOMS.forEach((room, i) => {
-      mctx.fillStyle = i === currentRoom ? '#B3261E' : room.theme === 'terrace' ? '#3F78A8' : '#5E6B65';
+      mctx.fillStyle = i === currentRoom ? '#B3261E' : !unlocked(i) ? '#2C3330' : room.terrace ? '#3F78A8' : '#5E6B65';
       mctx.fillRect((4 * i + 1) * S * mk, top + S * mk, 3 * S * mk - 1, 3 * S * mk);
-      if (i < ROOMS_N - 1) { mctx.fillStyle = '#5E6B65'; mctx.fillRect((4 * i + 4) * S * mk, top + 2 * S * mk, S * mk, S * mk); }
+      if (i < ROOMS_N - 1) { mctx.fillStyle = done[i] ? '#5E6B65' : '#2C3330'; mctx.fillRect((4 * i + 4) * S * mk, top + 2 * S * mk, S * mk, S * mk); }
     });
     const px = cam.x * mk, pz = top + cam.z * mk;
     mctx.fillStyle = 'rgba(242,182,50,.35)';
@@ -542,23 +810,33 @@
     mctx.beginPath(); mctx.arc(px, pz, 3.5, 0, 7); mctx.fill();
   }
   map.addEventListener('click', (e) => {
+    if (cardOpen) return;
     const r = map.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width * MW / mk;
-    goToRoom(roomAt(x));
+    const i = roomAt((e.clientX - r.left) / r.width * MW / mk);
+    if (unlocked(i)) goToRoom(i); else annaSays('That room is still closed. Finish the rooms before it first.');
   });
 
   /* ---------- rooms menu ---------- */
   const roomsDlg = document.getElementById('rooms-dialog');
   const list = document.getElementById('rooms-list');
-  ROOMS.forEach((room, i) => {
-    const li = document.createElement('li');
-    li.innerHTML = `<button type="button"><span>${room.en}</span><span class="ar" lang="ar">${room.ar}</span></button>`;
-    li.firstChild.addEventListener('click', () => { roomsDlg.close(); goToRoom(i); });
-    list.appendChild(li);
+  function renderRoomsMenu() {
+    list.innerHTML = '';
+    ROOMS.forEach((room, i) => {
+      const li = document.createElement('li');
+      const open = unlocked(i);
+      li.innerHTML = `<button type="button" ${open ? '' : 'disabled'}><span>${room.en}${open ? '' : ' <small>(closed)</small>'}</span><span class="ar" lang="ar">${room.ar}</span></button>`;
+      li.firstChild.addEventListener('click', () => { roomsDlg.close(); goToRoom(i); });
+      list.appendChild(li);
+    });
+  }
+  renderRoomsMenu();
+  document.getElementById('btn-rooms').addEventListener('click', () => { if (!cardOpen) roomsDlg.showModal(); });
+  document.getElementById('btn-restart').addEventListener('click', () => {
+    done.length = 0; saveDone(); refreshVeils(); renderRoomsMenu(); roomsDlg.close();
+    tour = null; Object.assign(cam, { x: x0Of(0) + 750, z: standZ(), yaw: 0, pitch: 0.05 });
   });
-  document.getElementById('btn-rooms').addEventListener('click', () => roomsDlg.showModal());
 
-  /* ---------- AR dialog ---------- */
+  /* ---------- AR ---------- */
   const arDlg = document.getElementById('ar-dialog');
   let mvLoading = false;
   function openAR() {
@@ -568,53 +846,48 @@
     const sc = document.createElement('script');
     sc.type = 'module';
     sc.src = 'https://cdn.jsdelivr.net/npm/@google/model-viewer@3/dist/model-viewer.min.js';
-    sc.onerror = () => {
-      mvLoading = false;
-      document.getElementById('ar-note').textContent = 'The 3D viewer could not load. Check your internet connection and try again.';
-    };
+    sc.onerror = () => { mvLoading = false; document.getElementById('ar-note').textContent = 'The 3D viewer could not load. Check your internet connection and try again.'; };
     document.head.appendChild(sc);
   }
-  document.getElementById('btn-ar').addEventListener('click', openAR);
+  document.getElementById('btn-ar').addEventListener('click', () => { if (!cardOpen) openAR(); });
 
-  /* ---------- classic page ---------- */
+  /* ---------- classic page (for teachers) ---------- */
   const classicDlg = document.getElementById('classic-dialog');
   const classicBody = document.getElementById('classic-body');
   let classicBuilt = false;
-  function openClassic() {
+  document.getElementById('btn-intro-classic').addEventListener('click', () => {
     if (!classicBuilt) {
       classicBody.innerHTML = ROOMS.map((room, i) => `
         <section>
           <h3 class="room-title">${i + 1}. ${room.en}<span class="ar" lang="ar">${room.ar}</span></h3>
-          ${room.panels.map((p) => `<div class="panel ${p.cls}">${p.html.replace('src="about:blank" data-src=', 'loading="lazy" src=')}</div>`).join('')}
+          ${room.pois.map((p) => `<article class="flat"><h4>${p.title}</h4>${p.html}</article>`).join('')}
         </section>`).join('');
       classicBuilt = true;
     }
     classicDlg.showModal();
-  }
-  document.getElementById('btn-classic').addEventListener('click', openClassic);
-  document.getElementById('btn-intro-classic').addEventListener('click', openClassic);
-
+  });
   document.querySelectorAll('dialog [data-close]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
   document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
 
-  /* ---------- exhibits: delegated clicks (works in the house and the classic page) ---------- */
+  /* ---------- things you can play with inside cards ---------- */
   document.addEventListener('click', (e) => {
-    const plate = e.target.closest('[data-plate]');
+    const t = e.target;
+    const plate = t.closest('[data-plate]');
     if (plate) { plate.classList.toggle('flip'); return; }
-    if (e.target.closest('[data-ar]')) { openAR(); return; }
-    if (e.target.closest('[data-play]')) { playPhrase(e.target.closest('.panel')); return; }
-    const str = e.target.closest('[data-strings]');
+    if (t.closest('[data-ar]')) { openAR(); return; }
+    if (t.closest('[data-play]')) { playPhrase(t.closest('.flat, #card')); return; }
+    if (t.closest('[data-dum]')) { drum('dum'); return; }
+    if (t.closest('[data-tek]')) { drum('tek'); return; }
+    if (t.closest('[data-rhythm]')) { maqsoum(); return; }
+    const str = t.closest('[data-strings]');
     if (str) {
-      const spans = [...str.children];
       const r = str.getBoundingClientRect();
-      const idx = Math.max(0, Math.min(7, Math.floor((e.clientX - r.left) / r.width * 8)));
-      pluck(idx, str.closest('.panel'));
+      pluck(Math.max(0, Math.min(7, Math.floor((e.clientX - r.left) / r.width * 8))), str.closest('.flat, #card'));
     }
   });
 
-  /* ---------- music: maqam Hijaz on D ---------- */
+  /* ---------- sound ---------- */
   const HIJAZ = [293.66, 311.13, 369.99, 392.0, 440.0, 466.16, 523.25, 587.33];
-  const HIJAZ_AR = ['دو', 'مي♭', 'فا♯', 'صول', 'لا', 'سي♭', 'دو', 'ري'];
   const NAMES = ['D', 'E♭', 'F♯', 'G', 'A', 'B♭', 'C', 'D'];
   let actx = null;
   function audio() {
@@ -622,9 +895,8 @@
     if (actx.state === 'suspended') actx.resume();
     return actx;
   }
-  function pluck(i, panel, when = 0) {
-    const ac = audio();
-    const t = ac.currentTime + when;
+  function pluck(i, scope, when = 0) {
+    const ac = audio(), t = ac.currentTime + when;
     const out = ac.createGain();
     out.gain.setValueAtTime(0.0001, t);
     out.gain.exponentialRampToValueAtTime(0.35, t + 0.008);
@@ -635,60 +907,86 @@
     lp.frequency.exponentialRampToValueAtTime(500, t + 0.5);
     lp.connect(out); out.connect(ac.destination);
     for (const [type, det, g] of [['sawtooth', 0, 0.6], ['triangle', 6, 0.5], ['sine', -4, 0.4]]) {
-      const o = ac.createOscillator(); const og = ac.createGain();
+      const o = ac.createOscillator(), og = ac.createGain();
       o.type = type; o.frequency.value = HIJAZ[i]; o.detune.value = det; og.gain.value = g;
       o.connect(og); og.connect(lp); o.start(t); o.stop(t + 1.7);
     }
     setTimeout(() => {
-      if (!panel) return;
-      const s = panel.querySelectorAll('[data-strings] span')[i];
+      if (!scope) return;
+      const s = scope.querySelectorAll('[data-strings] span')[i];
       if (s) { s.classList.remove('hit'); void s.offsetWidth; s.classList.add('hit'); }
-      const n = panel.querySelector('[data-notes]');
-      if (n) n.textContent = `${HIJAZ_AR[i]}  ·  ${NAMES[i]}`;
+      const n = scope.querySelector('[data-notes]');
+      if (n) n.textContent = `Note: ${NAMES[i]}`;
     }, when * 1000);
   }
-  function playPhrase(panel) {
-    const phrase = [[4, 0], [3, .32], [2, .56], [1, .8], [2, 1.2], [1, 1.44], [0, 1.68], [0, 2.3], [1, 2.6], [2, 2.84], [3, 3.08], [4, 3.32], [5, 3.6], [4, 3.84], [3, 4.08], [2, 4.4], [1, 4.64], [0, 5.0]];
-    phrase.forEach(([n, t]) => pluck(n, panel, t));
+  function playPhrase(scope) {
+    [[4, 0], [3, .32], [2, .56], [1, .8], [2, 1.2], [1, 1.44], [0, 1.68], [0, 2.3], [1, 2.6], [2, 2.84], [3, 3.08], [4, 3.32], [5, 3.6], [4, 3.84], [3, 4.08], [2, 4.4], [1, 4.64], [0, 5.0]]
+      .forEach(([n, t]) => pluck(n, scope, t));
+  }
+  function drum(kind, when = 0) {
+    const ac = audio(), t = ac.currentTime + when;
+    if (kind === 'dum') {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(55, t + 0.25);
+      g.gain.setValueAtTime(0.9, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + 0.5);
+    } else {
+      const len = Math.floor(ac.sampleRate * 0.12);
+      const buf = ac.createBuffer(1, len, ac.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
+      const src = ac.createBufferSource(), bp = ac.createBiquadFilter(), g = ac.createGain();
+      src.buffer = buf; bp.type = 'bandpass'; bp.frequency.value = 2600; bp.Q.value = 1.2; g.gain.value = 0.9;
+      src.connect(bp); bp.connect(g); g.connect(ac.destination); src.start(t);
+    }
+  }
+  function maqsoum() {
+    const beat = 0.24;
+    for (let bar = 0; bar < 3; bar++) {
+      const b = bar * 8 * beat;
+      [['dum', 0], ['tek', 1], ['tek', 3], ['dum', 4], ['tek', 6]].forEach(([k, s]) => drum(k, b + s * beat));
+    }
   }
 
-  /* ---------- hints & flash ---------- */
+  /* ---------- hints ---------- */
   const hint = document.getElementById('hint');
   let hintHidden = false;
   function hideHint() { if (!hintHidden) { hintHidden = true; hint.style.opacity = 0; } }
-  function flash(msg) {
-    toast.innerHTML = `<span class="en" style="font-size:16px;max-width:80vw;display:block">${msg}</span>`;
-    toast.classList.add('on'); clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('on'), 3500);
-  }
 
-  /* ---------- start ---------- */
+  /* =====================================================================
+     START
+     ===================================================================== */
   let started = false;
-  const touch = isTouchDevice();
+  const touch = isTouch();
   if (touch) document.body.classList.add('touch');
   document.getElementById('intro-keys').textContent = touch
-    ? 'Left thumb walks, right thumb looks around. Tap anything on the walls.'
-    : 'Walk with W A S D or the arrow keys. Drag to look around. Click anything on the walls.';
+    ? 'Left thumb walks, right thumb looks around. Anna the ghost will show you everything, so turn your sound on.'
+    : 'Walk with W A S D or the arrow keys and drag to look. Anna the ghost will show you everything, so turn your sound on.';
   hint.textContent = touch ? 'Left thumb: walk · Right thumb: look' : 'W A S D to walk · drag to look';
 
   document.getElementById('btn-enter').addEventListener('click', () => {
     started = true;
     document.getElementById('intro').classList.add('gone');
     document.getElementById('hud').hidden = false;
-    showToast(ROOMS[currentRoom]);
     audio();
+    if (canSpeak) speechSynthesis.speak(new SpeechSynthesisUtterance(''));   // lets iOS speak later
+    showToast(ROOMS[currentRoom]);
   });
 
   updateRoom();
-  render();
+  idleAnna();
+  Object.assign(annaPos, annaGoal);
+  render(0);
   requestAnimationFrame(frame);
 
-  window.__bayt = cam;   // handy for debugging in the console
-  // test hook: ?at=room&yaw=deg
+  window.__bayt = { cam, done, get tour() { return tour; }, get cardOpen() { return cardOpen; } };
   const q = new URLSearchParams(location.search);
-  if (q.has('at')) {
-    const c = roomCentre(+q.get('at'));
-    cam.x = c.x; cam.z = +(q.get('z') || 2.5) * S; cam.yaw = (+q.get('yaw') || 0) * Math.PI / 180;
+  if (q.has('at')) {                                  // for testing: ?at=room&yaw=deg&start
+    const i = +q.get('at');
+    for (let k = 0; k < i; k++) done[k] = true;
+    refreshVeils(); renderRoomsMenu();
+    cam.x = x0Of(i) + 750; cam.z = +(q.get('z') || 2.5) * S; cam.yaw = (+q.get('yaw') || 0) * Math.PI / 180;
+    if (q.has('notour')) done[i] = true;
     if (q.has('start')) document.getElementById('btn-enter').click();
   }
 })();
